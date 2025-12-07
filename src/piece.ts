@@ -34,7 +34,7 @@ export const TETROMINOS = {
 		[0, 7, 7],
 		[0, 0, 0],
 	]
-} as const;
+};
 
 export type TetrominoType = keyof typeof TETROMINOS;
 

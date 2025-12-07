@@ -15,7 +15,8 @@ export class Game {
 	private holdPiece: Piece | null = null;
 	private hasSwappedHold: boolean = false;
 
-	private pieceBag: TetrominoType[] = [];
+	private pieceQueue: TetrominoType[] = [];
+	private readonly PREVIEW_COUNT = 5;
 
 	gameOver = false;
 
@@ -61,12 +62,15 @@ export class Game {
 		this.nextPiece();
 	}
 
-	private fillPieceBag() {
-		this.pieceBag = createPieceBag();
+	private refillQueue() {
+		while (this.pieceQueue.length <= this.PREVIEW_COUNT + 7) {
+			this.pieceQueue.push(...createPieceBag());
+		}
 	}
 
 	reset() {
-		this.fillPieceBag();
+		this.pieceQueue = [];
+		this.refillQueue();
 		this.nextPiece();
 		this.board.initializeGrid();
 	}
@@ -78,9 +82,9 @@ export class Game {
 	}
 
 	nextPiece() {
-		if (this.pieceBag.length == 0) this.fillPieceBag();
-		this.currentPiece = createPiece(this.pieceBag.pop() as TetrominoType);
-		this.currentPiece.x = Math.floor(this.board.width/2 - this.currentPiece.shape.length/2);
+		this.refillQueue();
+		this.currentPiece = createPiece(this.pieceQueue.shift() as TetrominoType);
+		this.resetPieceState(this.currentPiece);
 
 		if (!this.canMove(0, 0)) this.gameOver = true;
 	}
@@ -182,6 +186,15 @@ export class Game {
 		drawPieceShape(this.holdPiece.shape, xOffset, 0, this.settings.blockSize, false, ctx);
 	}
 
+	drawPieceQueue(ctx: CanvasRenderingContext2D) {
+		let xOffset = (this.board.width + 1) * this.settings.blockSize;
+		let entryHeight = this.settings.blockSize * 2.5;
+
+		for (let i = 0; i < this.PREVIEW_COUNT; i++) {
+			drawPieceShape(TETROMINOS[this.pieceQueue[i]], xOffset, entryHeight*i, this.settings.blockSize, false, ctx);
+		}
+	}
+
 	drawDropPreview(ctx: CanvasRenderingContext2D) {
 		if (!this.currentPiece) return;
 		let lowestY = 0;
@@ -214,5 +227,6 @@ export class Game {
 		);
 		this.drawHoldPiece(ctx);
 		this.drawDropPreview(ctx);
+		this.drawPieceQueue(ctx);
 	}
 }
