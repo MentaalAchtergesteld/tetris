@@ -113,12 +113,20 @@ export class Game {
 
 		const candidate = getRotatedPiece(this.currentPiece, dir);
 
-		const kicks = [0, 1, -1, 2, -2];
+		const kicks = [
+			{x:0,  y:0},
+			{x:1,  y:0},
+			{x:-1, y:0},
+			{x:0,  y:-1},
+			{x:1,  y:-1},
+			{x:-1, y:-1},
+		];
 
 		for (const offset of kicks) {
-			if (!this.isValidPosition(candidate.shape, candidate.x + offset, candidate.y)) continue;
+			if (!this.isValidPosition(candidate.shape, candidate.x + offset.x, candidate.y + offset.y)) continue;
 			this.currentPiece.shape = candidate.shape;
-			this.currentPiece.x += offset;
+			this.currentPiece.x += offset.x;
+			this.currentPiece.y += offset.y;
 			this.lockTimer = 0;
 			return true;
 		}
@@ -170,7 +178,7 @@ export class Game {
 
 	drawHoldPiece(ctx: CanvasRenderingContext2D) {
 		if (!this.holdPiece) return;
-		let xOffset = (this.board.width+1) * this.settings.blockSize;
+		let xOffset = -this.settings.blockSize*4.5;
 		drawPieceShape(this.holdPiece.shape, xOffset, 0, this.settings.blockSize, false, ctx);
 	}
 
@@ -190,6 +198,11 @@ export class Game {
 	}
 
 	draw(ctx: CanvasRenderingContext2D) {
+		const totalWidth = this.board.width * this.settings.blockSize;
+		const totalHeight = this.board.height * this.settings.blockSize;
+
+		ctx.translate(-totalWidth/2, -totalHeight/2);
+
 		this.board.draw(this.settings.blockSize, ctx);
 		if (this.currentPiece) drawPieceShape(
 			this.currentPiece.shape,

@@ -46,7 +46,12 @@ function loop(time: number) {
 
 	game.update(dt);
 	controller.update(dt);
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.save();
+	ctx.translate(canvas.width/2, canvas.height/2);
 	renderGame(game, ctx);
+	ctx.restore();
 
 	requestAnimationFrame(loop);
 }

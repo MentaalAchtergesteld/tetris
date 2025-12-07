@@ -10,8 +10,6 @@ export interface ControllerSettings {
 	das: number;
 	arr: number;
 	sdf: number;
-	gravity: number;
-	lockDelay: number;
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
@@ -23,9 +21,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
 }
 
 export const DEFAULT_CONTROLLER_SETTINGS: ControllerSettings = {
-	das: 0.1,
-	arr: 0.02,
+	das: 0.120,
+	arr: 0.03,
 	sdf: 1000,
-	gravity: 1,
-	lockDelay: 0.5,
 }
