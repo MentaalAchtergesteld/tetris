@@ -34,8 +34,6 @@ export class LocalController implements Controller {
 	}
 
 	update(dt: number): void {
-		if (this.game.gameOver) return; 
-
 		this.game.gravityFactor = this.input.isDown("ArrowDown") ? this.settings.sdf : 1;
 		this.handleMovement(dt);
 		this.handleActions();

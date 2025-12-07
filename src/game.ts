@@ -73,6 +73,7 @@ export class Game {
 		this.refillQueue();
 		this.nextPiece();
 		this.board.initializeGrid();
+		this.gameOver = false;
 	}
 
 	resetPieceState(piece: Piece) {
