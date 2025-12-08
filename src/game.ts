@@ -1,9 +1,29 @@
 import { Board } from "./board.ts";
+import { EventEmitter } from "./event_emitter.ts";
 import { Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceShape, getRotatedPiece } from "./piece";
 import { GameSettings, DEFAULT_GAME_SETTINGS } from "./settings.ts";
 
+
+export interface GameEvents {
+	"start": void,
+	"gameOver": void,
+
+	"move": number,
+	"rotate": number,
+
+	"hardDrop": void,
+	"softDrop": void,
+
+	"lock": void,
+	"lineClear": number,
+
+	"hold": void,
+}
+
 export class Game {
 	settings: GameSettings;
+
+	public events = new EventEmitter<GameEvents>();
 
 	private board: Board;
 
@@ -53,7 +73,8 @@ export class Game {
 		if (!this.currentPiece) return;
 
 		this.board.lockPiece(this.currentPiece);
-		this.board.checkLineClear();
+		let lines = this.board.checkLineClear();
+		if (lines > 0) this.events.emit("lineClear", lines);
 
 		this.hasSwappedHold = false;
 		this.lockTimer = 0;
@@ -74,6 +95,7 @@ export class Game {
 		this.nextPiece();
 		this.board.initializeGrid();
 		this.gameOver = false;
+		this.events.emit("start", undefined);
 	}
 
 	resetPieceState(piece: Piece) {
@@ -103,6 +125,7 @@ export class Game {
 
 		this.lockTimer = 0;
 		this.gravityTimer = 0;
+		this.events.emit("hold", undefined);
 	}
 
 	movePiece(dir: -1 | 1): boolean {
@@ -110,6 +133,8 @@ export class Game {
 		if (!this.canMove(dir, 0)) return false;
 		this.currentPiece.x += dir;
 		this.lockTimer = 0;
+
+		this.events.emit("move", dir);
 		return true;
 	}
 
@@ -133,15 +158,10 @@ export class Game {
 			this.currentPiece.x += offset.x;
 			this.currentPiece.y += offset.y;
 			this.lockTimer = 0;
+			this.events.emit("rotate", dir);
 			return true;
 		}
 		return false;
-	}
-
-	lockPiece() {
-		if (!this.currentPiece) return;
-		this.lockTimer = 0;
-		this.board.lockPiece(this.currentPiece);
 	}
 
 	hardDropPiece() {
@@ -149,6 +169,7 @@ export class Game {
 		let testedY = 0;
 		while (this.canMove(0, testedY)) testedY++;
 		this.currentPiece.y += testedY-1;
+		this.events.emit("hardDrop", undefined);
 		this.endTurn();
 	}
 
@@ -159,6 +180,7 @@ export class Game {
 
 		while (this.gravityTimer >= interval) {
 			if (!this.canMove(0, 1)) { this.gravityTimer = 0; break; }
+			if (this.gravityFactor != 1) this.events.emit("softDrop", undefined);
 			this.currentPiece.y++;
 			this.lockTimer = 0;
 
@@ -171,6 +193,7 @@ export class Game {
 		if (this.canMove(0, 1)) { this.lockTimer = 0; return; }
 		this.lockTimer += dt;
 		if (this.lockTimer < this.settings.lockDelay) return;
+		this.events.emit("lock", undefined);
 		this.endTurn();
 	}
 
