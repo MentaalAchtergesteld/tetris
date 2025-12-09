@@ -71,6 +71,7 @@ new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addButton("4 Line Cleared", () => effectsManager.playLinesCleared(4))
 	.addButton("Tetris Cleared", () => effectsManager.playTetrisCleared())
 	.addButton("Hard Drop",      () => effectsManager.playHardDrop())
+	.addButton("Game Over",      () => effectsManager.playGameOver())
 
 const setRowsClearedLabel = stats.addLabeledValue("Rows Cleared", 0);
 
