@@ -3,6 +3,7 @@ import { EventEmitter } from "./event_emitter.ts";
 import { MAX_PIECE_BOUNDS, Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceCentered, drawPieceShape, getRotatedPiece } from "./piece";
 import { GameSettings, DEFAULT_GAME_SETTINGS } from "./settings.ts";
 import { ColorTheme } from "./theme.ts";
+import { drawLabel, getTextHeight } from "./visuals.ts";
 
 export interface GameEvents {
 	"start": void,
@@ -221,8 +222,16 @@ export class Game {
 
 		const gap = this.settings.blockSize*0.5;
 
+
+		const labelText = "hold";
+		const textHeight = getTextHeight(labelText, 32, "Audiowide", ctx);
+
 		const x = -(width+gap);
-		const y = 0;
+		let y = textHeight;
+
+		drawLabel(labelText, x, y, 32, "Audiowide", theme.BoardBorder, ctx);
+
+		y += 8;
 
 		ctx.fillStyle = theme.BoardBackground;
 		ctx.fillRect(x, y, width, height);
@@ -252,8 +261,15 @@ export class Game {
 		const height = entryHeight * this.PREVIEW_COUNT;
 		const width = (MAX_PIECE_BOUNDS.width+.5)*this.settings.blockSize;
 
+		const labelText = "queue";
+		const textHeight = getTextHeight(labelText, 32, "Audiowide", ctx);
+
 		const x = (this.board.width+1) * this.settings.blockSize;
-		const y = 0;
+		let y = textHeight;
+
+		drawLabel(labelText, x, y, 32, "Audiowide", theme.BoardBorder, ctx);
+
+		y += 8;
 
 		ctx.fillStyle = theme.BoardBackground;
 		ctx.fillRect(x, y, width, height);
@@ -267,10 +283,9 @@ export class Game {
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
 
 		for (let i = 0; i < this.PREVIEW_COUNT; i++) {
-			console.log(entryHeight*i);
 			drawPieceCentered(
 				TETROMINOS[this.pieceQueue[i]],
-				x, entryHeight*i,
+				x, y+entryHeight*i,
 				width, entryHeight,
 				this.settings.blockSize,
 				theme, ctx

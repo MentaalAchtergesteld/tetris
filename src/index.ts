@@ -119,4 +119,9 @@ function loop(time: number) {
 	requestAnimationFrame(loop);
 }
 
-requestAnimationFrame(loop);
+async function init() {
+	await document.fonts.ready;
+	requestAnimationFrame(loop);
+}
+
+init();

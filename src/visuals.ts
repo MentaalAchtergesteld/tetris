@@ -1,3 +1,5 @@
+import { Color } from "./theme";
+
 export class ScreenShake {
 	private shakeIntensity: number;
 	shakeDecay: number;
@@ -55,4 +57,34 @@ export class ScreenRecoil {
 
 		ctx.translate(0, this.y);
 	}
+}
+
+export function getTextHeight(text: string, fontSize: number, font: string, ctx: CanvasRenderingContext2D): number {
+	ctx.save();
+	ctx.font = `${fontSize}px ${font}, sans-serif`;
+	const metrics = ctx.measureText(text);
+	ctx.restore();
+	return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
+}
+
+export function drawLabel(
+	text: string,
+	anchorX: number,
+	anchorY: number,
+	fontSize: number,
+	font: string,
+	color: Color,
+	ctx: CanvasRenderingContext2D
+) {
+	ctx.save();
+
+	ctx.font = `${fontSize}px ${font}, sans-serif`;
+	ctx.textAlign = "left";
+	ctx.textBaseline = "bottom";
+
+	ctx.fillStyle = color;
+
+	ctx.fillText(text, anchorX, anchorY);
+
+	ctx.restore();
 }
