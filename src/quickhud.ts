@@ -3,18 +3,19 @@ interface ElementCreator {
 	withClasses(classes: string[]): ElementCreator,
 	withId(name: string): ElementCreator,
 	withAttribute(name: string, value: string): ElementCreator,
-	withAttributes(attributes: { string: string }): ElementCreator,
-	withStyle(name: string, value: CSSStyleDeclaration): ElementCreator,
-	withStyles(styles: { string: CSSStyleDeclaration }): ElementCreator,
+	withAttributes(attributes: Record<string, string>): ElementCreator,
+	withStyle(name: Extract<keyof CSSStyleDeclaration, string>, value: string): ElementCreator,
+	withStyles(styles: Partial<Record<Extract<keyof CSSStyleDeclaration, string>, string>>): ElementCreator,
 	withHtml(html: string): ElementCreator,
 	withText(text: string): ElementCreator,
 	appendChild(child: HTMLElement): ElementCreator,
 	appendChildren(children: HTMLElement[]): ElementCreator,
 	addToParent(parent: HTMLElement): ElementCreator,
+	on<K extends keyof HTMLElementEventMap>(type: K, listener: (event: HTMLElementEventMap[K]) => any, options?: boolean | AddEventListenerOptions): ElementCreator,
 	ok(): HTMLElement,
 }
 
-function createElement(element: string): ElementCreator {
+function createElement<K extends keyof HTMLElementTagNameMap>(element: K): ElementCreator {
 	let elem = document.createElement(element);
 
 	return {
@@ -22,19 +23,21 @@ function createElement(element: string): ElementCreator {
 		withClasses(classes) { classes.forEach(c => elem.classList.add(c)); return this; },
 		withId(name) { elem.id = name; return this; },
 		withAttribute(name, value) { elem.setAttribute(name, value); return this; },
-		withAttributes(attributes) { Object.entries(attributes).forEach(a => elem.setAttribute(a[0], a[1])); return this; },
-		withStyle(name, value) { elem.style[name] = value; return this; },
-		withStyles(styles) { Object.entries(styles).forEach(s => elem.style[s[0]] = s[1]); return this; },
+		withAttributes(attributes) { Object.entries(attributes).forEach(([key, val]) => elem.setAttribute(key, val)); return this; },
+		withStyle(name, value) { (elem.style as any)[name] = value; return this; },
+		withStyles(styles) { Object.entries(styles).forEach(([key, val]) => elem.style[key] = val); return this; },
 		withHtml(html) { elem.innerHTML = html; return this; },
 		withText(text) { elem.innerText = text; return this; },
 		appendChild(child) { elem.appendChild(child); return this; },
 		appendChildren(children) { children.forEach(e => elem.appendChild(e)); return this; },
 		addToParent(parent) { parent.appendChild(elem); return this; },
+		on(type, listener, options) { elem.addEventListener(type, listener as EventListener, options); return this; },
 		ok() { return elem; },
 	}
 }
 
 function injectStyles() {
+	if (document.getElementById("qh-styles")) return;
 	const css = `
 		.qh-wrapper {
 				position: absolute;
@@ -142,9 +145,25 @@ function injectStyles() {
 	`;
 
 	createElement('style')
-		.withText(css)
+		.withHtml(css)
 		.withId("qh-styles")
 		.addToParent(document.head);
+}
+
+export enum HUDPosition {
+	TopRight    = "top-right",
+	BottomRight = "bottom-right",
+	TopLeft     = "top-left",
+	BottomLeft  = "top-left",
+}
+
+interface QuickHUDFolder {
+    addRange(label: string, min: number, max: number, value: number, step: number, callback: (value: number) => void): QuickHUDFolder;
+    addSelect(label: string, options: string[] | Record<string, string>, selectedValue: string, callback: (value: string) => void): QuickHUDFolder;
+    addButton(label: string, callback: () => void): QuickHUDFolder;
+    addLabeledValue(label: string, initialValue: any): { update: (val: any) => void, folder: QuickHUDFolder };
+    addFolder(title: string): QuickHUDFolder; 
+    parent(): QuickHUD | QuickHUDFolder; 
 }
 
 export class QuickHUD {
@@ -153,12 +172,17 @@ export class QuickHUD {
 	private wrapper: HTMLDivElement;
 	private toggleEl: HTMLSpanElement;
 
-	private isOpen: boolean;
-	private hasDragged: boolean;
-	private draggable: boolean;
+	private isOpen: boolean = true;
+	private hasDragged: boolean = false;
+	private isDraggable: boolean = false;
 
-	constructor(title = "QuickHUD", position = "top-right") {
-		this.toggleEl = createElement("span").withClass("qh-toggle").withText("▼").ok();
+	constructor(title = "QuickHUD", position: HUDPosition = HUDPosition.TopRight) {
+		injectStyles();
+
+		this.toggleEl = createElement("span")
+			.withClass("qh-toggle")
+			.withText("▼")
+			.ok();
 
 		this.header = createElement("div")
 			.withClass("qh-header")
@@ -178,41 +202,48 @@ export class QuickHUD {
 			.addToParent(document.body)
 			.ok() as HTMLDivElement;
 
-		this.isOpen = true;
-		this.hasDragged = false;
-		this.draggable = false;
 		this.initDragAndToggle();
-
-		if (!document.getElementById("quick-hud-styles")) injectStyles();
 	}
 
-	toggle() {
-		this.isOpen = !this.isOpen;
+	toggle(force?: boolean) {
+		this.isOpen = force !== undefined ? force : !this.isOpen;
 
 		this.content.style.display = this.isOpen ? "flex" : "none";
 		this.toggleEl.style.transform = this.isOpen ? "rotate(0deg)" : "rotate(-90deg)";
 	}
 
-	initDragAndToggle() {
-		let startX: number, startY: number;
-		let initialLeft: number, initialTop: number;
-		const THRESHOLD = 5;
+	setDraggable(enabled: boolean): QuickHUD {
+		this.isDraggable = enabled;
+		this.header.style.cursor = enabled ? "grab" : "default";
+
+		if (enabled) {
+			this.header.setAttribute("title", "Drag to move, click to toggle");
+		} else {
+			this.header.removeAttribute("title");
+		}
+		return this;
+	}
+
+	private initDragAndToggle() {
+		let startX = 0, startY = 0;
+		let initialLeft = 0, initialTop = 0;
+		const THRESHOLD = 3;
 
 		this.header.addEventListener('click', _ => {
 			if (this.hasDragged) {
 					this.hasDragged = false;
 					return;
 			}
-
-			this.isOpen = !this.isOpen;
-			this.content.style.display = this.isOpen ? 'flex' : 'none';
+			this.toggle();
 		});
 
 		this.header.addEventListener('pointerdown', (e) => {
-			if (!this.draggable) return;
+			if (!this.isDraggable) return;
+
+			if (e.button != 0) return;
+
 			this.header.setPointerCapture(e.pointerId);
 			this.header.style.cursor = 'grabbing';
-
 			this.hasDragged = false; 
 			
 			startX = e.clientX;
@@ -223,48 +254,36 @@ export class QuickHUD {
 			initialTop = rect.top;
 
 			this.wrapper.style.right = 'auto';
-			this.wrapper.style.left = initialLeft + 'px';
-			this.wrapper.style.top = initialTop + 'px';
+			this.wrapper.style.bottom = 'auto';
+			this.wrapper.style.left = `${initialLeft}px`;
+			this.wrapper.style.top = `${initialTop}px`;
 		});
 
 		this.header.addEventListener('pointermove', (e) => {
-			if (!this.header.hasPointerCapture(e.pointerId)) return;
+			if (!this.isDraggable || !this.header.hasPointerCapture(e.pointerId)) return;
 
 			const dx = e.clientX - startX;
 			const dy = e.clientY - startY;
 
-			if (Math.hypot(dx, dy) > THRESHOLD) this.hasDragged = true;
-
-			if (!this.hasDragged) return
-			this.wrapper.style.left = (initialLeft + dx) + 'px';
-			this.wrapper.style.top = (initialTop + dy) + 'px';
+			if (Math.hypot(dx, dy) < THRESHOLD) return;
+			this.hasDragged = true;
+			this.wrapper.style.left = `${initialLeft + dx}px`;
+			this.wrapper.style.top = `${initialTop + dy}px`;
 		});
 
 		this.header.addEventListener('pointerup', (e) => {
+			if (!this.isDraggable) return;
 			this.header.releasePointerCapture(e.pointerId);
 			this.header.style.cursor = 'grab';
 		});
 	}
 
-	setDraggable(enabled: boolean) {
-		this.draggable = enabled;
-		this.header.style.cursor = enabled ? "grab" : "default";
-
-		if (enabled) {
-			this.header.setAttribute("title", "Drag me!");
-		} else {
-			this.header.removeAttribute("title");
-		}
-
-		return this;
-	}
-
-	createRow(parent: HTMLElement, children: HTMLElement[]) {
+	private createRow(parent: HTMLElement, children: HTMLElement[]): HTMLDivElement {
 		return createElement("div")
 			.withClass("qh-row")
 			.appendChildren(children)
 			.addToParent(parent)
-			.ok();
+			.ok() as HTMLDivElement;
 	}
 
 	addRange(
@@ -272,10 +291,10 @@ export class QuickHUD {
 		min: number, max: number,
 		value: number, step: number,
 		callback: (value: number) => void,
-		parent: HTMLElement = this.content) {
+		parent: HTMLElement = this.content
+	): this {
 		const valLabel = createElement("span")
-			.withText(String(value))
-			.withId(`val-${label}`)
+			.withText(value.toFixed(step < 1 ? 2 : 0))
 		  .ok();
 
 		const labelRow = createElement("div")
@@ -287,41 +306,42 @@ export class QuickHUD {
 		const input = createElement("input")
 			.withClass("qh-slider")
 			.withAttribute("type", "range")
-			.withAttribute("min", String(min))
-			.withAttribute("max", String(max))
-			.withAttribute("step", String(step))
-			.withAttribute("value", String(value))
+			.withAttribute("min", min.toString())
+			.withAttribute("max", max.toString())
+			.withAttribute("step", step.toString())
+			.withAttribute("value", value.toString())
+			.on("input", e => {
+				const target = e.target as HTMLInputElement;
+				const val = parseFloat(target.value);
+				valLabel.innerText = val.toFixed(step < 1 ? 2 : 0);
+				callback(val);
+			})
 			.ok() as HTMLInputElement;
 
 		this.createRow(parent, [labelRow, input]);
-
-		input.addEventListener("input", _ => {
-			const val = parseFloat(input.value);
-			valLabel.innerText = val.toFixed(step < 1 ? 2 : 0);
-			callback(val);
-		});
-
 		return this;
 	}
 
 	addSelect(
 		label: string,
-		options: string[] | { string: string }, selectedValue: string,
+		options: string[] | Record<string, string>,
+		selectedValue: string,
 		callback: (value: string) => void,
-		parent: HTMLElement = this.content) {
+		parent: HTMLElement = this.content
+	): this {
 		const labelRow = createElement("div")
 			.withClass("qh-label-row")
 			.withText(label)
 			.ok();
 
-		let optionsElems: HTMLElement[] = [];
+		let optionsElems: HTMLOptionElement[] = [];
+
 		if (Array.isArray(options)) {
 			options.forEach(opt => {
 				const el = createElement("option")
 					.withText(opt)
 					.withAttribute("value", opt)
-					.withAttribute("selected", String(opt == selectedValue))
-					.ok();
+					.ok() as HTMLOptionElement;
 				optionsElems.push(el);	
 			});
 		} else {
@@ -329,8 +349,7 @@ export class QuickHUD {
 				const el = createElement("option")
 					.withText(key)
 					.withAttribute("value", val)
-					.withAttribute("selected", String(val == selectedValue))
-					.ok();
+					.ok() as HTMLOptionElement;
 				optionsElems.push(el);
 			});
 		}
@@ -338,53 +357,104 @@ export class QuickHUD {
 		const select = createElement("select")
 			.withClass("qh-select")
 			.appendChildren(optionsElems)
+			.on("change", (e) => {
+				const target = e.target as HTMLSelectElement;
+				callback(target.value);
+			})
+			.withAttribute("value", selectedValue)
 			.ok() as HTMLInputElement;
 
 		this.createRow(parent, [labelRow, select]);
+		return this;
+	}
 
-		select.addEventListener("change", _ => callback(select.value));
+	addButton(
+		label: string,
+		callback: () => void,
+		parent: HTMLElement = this.content
+	): this {
+		createElement("button")
+			.withText(label)
+			.withClass("qh-button")
+			.on("click", callback)
+			.addToParent(parent)
+			.ok();
 
 		return this;
 	}
 
-	addButton(label: string, callback: () => void, parent: HTMLElement = this.content) {
-		const btn = createElement("button")
-			.withText(label)
-			.withClass("qh-button")
-			.addToParent(parent)
+	addLabeledValue<T>(
+		label: string,
+		initialValue: T,
+		parent: HTMLElement = this.content
+	): (value: any) => void {
+		const valueSpan = createElement("span")
+			.withText(String(initialValue))
+			.withStyle("color", "#fff")
 			.ok();
 
-		btn.addEventListener("click", callback);
+		const row = createElement("div")
+			.withClass("qh-label-row")
+			.appendChild(createElement("span").withText(label).ok())
+			.appendChild(valueSpan)
+			.ok();
+
+		this.createRow(parent, [row]);
+
+		return (newValue: T) => {
+			valueSpan.innerText = String(newValue);
+		}
 	}
 
-	addFolder(title: string) {
+	addFolder(title: string): QuickHUDFolder {
+		return this.createFolder(title, this.content, this);
+	}
+
+	private createFolder(title: string, parentEl: HTMLElement, parentObj: QuickHUD | QuickHUDFolder): QuickHUDFolder {
 		const header = createElement("div")
 			.withText(title)
 			.withClass("qh-folder-header")
 			.ok();
-	
+
 		const content = createElement("div")
 			.withClass("qh-folder-content")
 			.ok();
 
-		const folder = createElement("div")
+		const folderEl = createElement("div")
 			.withClass("qh-folder")
 			.appendChild(header)
 			.appendChild(content)
-			.addToParent(this.content)
+			.addToParent(parentEl)
 			.ok();
 
-		header.addEventListener("click", _ => folder.classList.toggle("open"));
+		header.addEventListener("click", e => {
+			e.stopPropagation();
+			folderEl.classList.toggle("open");
+		});
 
-		return this.folderResult(this, content);
-	}
-
-	folderResult(parent: QuickHUD, content: HTMLElement) {
-		return {
-			addRange: (l: string, min: number, max: number, v: number, s: number, cb: (value: number) => void) => { this.addRange(l, min, max, v, s, cb, content); return this.folderResult(parent, content) },
-			addSelect: (l: string, opts: string[] | { string: string }, v: string, cb: (value: string) => void) => { this.addSelect(l, opts, v, cb, content); return this.folderResult(parent, content); },
-			addButton: (l: string, cb: () => void) => { this.addButton(l, cb, content); return this.folderResult(parent, content); },
-			ok : () => parent,
+		const folder: QuickHUDFolder = {
+			addRange: (l, min, max, v, s, cb) => {
+				this.addRange(l, min, max, v, s, cb, content);
+				return folder;
+			},
+			addSelect: (l, opts, v, cb) => {
+				this.addSelect(l, opts, v, cb, content);
+				return folder;
+			},
+			addButton: (l, cb) => {
+				this.addButton(l, cb);
+				return folder;
+			},
+			addLabeledValue: (l, v) => {
+				const update = this.addLabeledValue(l, v, content);
+				return { update, folder };
+			},
+			addFolder: (t) => {
+				return this.createFolder(t, content, folder);
+			},
+			parent: () => parentObj
 		}
+		return folder;
 	}
 }
+

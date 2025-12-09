@@ -3,7 +3,6 @@ import { EventEmitter } from "./event_emitter.ts";
 import { Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceShape, getRotatedPiece } from "./piece";
 import { GameSettings, DEFAULT_GAME_SETTINGS } from "./settings.ts";
 
-
 export interface GameEvents {
 	"start": void,
 	"gameOver": void,
