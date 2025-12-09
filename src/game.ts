@@ -91,9 +91,9 @@ export class Game {
 
 	reset() {
 		this.pieceQueue = [];
+		this.board.initializeGrid();
 		this.refillQueue();
 		this.nextPiece();
-		this.board.initializeGrid();
 		this.gameOver = false;
 		this.events.emit("start", undefined);
 	}
@@ -109,7 +109,10 @@ export class Game {
 		this.currentPiece = createPiece(this.pieceQueue.shift() as TetrominoType);
 		this.resetPieceState(this.currentPiece);
 
-		if (!this.canMove(0, 0)) this.gameOver = true;
+		if (!this.canMove(0, 0)) {
+			this.gameOver = true;
+			this.events.emit("gameOver", undefined);
+		}
 	}
 
 	swapHold() {

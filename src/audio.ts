@@ -37,18 +37,15 @@ export class AudioManager {
 			const source = this.ctx.createBufferSource();
 			source.buffer = this.noiseBuffer;
 			
-			// Filter: Highpass haalt de brommende lage tonen weg -> "PSSHH"
 			const filter = this.ctx.createBiquadFilter();
 			filter.type = "highpass";
 			filter.frequency.value = filterFreq;
 
 			const gain = this.ctx.createGain();
 			
-			// Envelope: Harde klap, dan zacht uitdoven
 			gain.gain.setValueAtTime(vol, this.ctx.currentTime);
 			gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
 
-			// Verbinden: Source -> Filter -> Gain -> Master
 			source.connect(filter);
 			filter.connect(gain);
 			gain.connect(this.masterGain);
@@ -156,5 +153,42 @@ export class AudioManager {
 		} else {
 			this.masterGain.gain.setValueAtTime(this.volume, this.ctx.currentTime);
 		}
+	}
+}
+
+export class EffectsManager {
+	private manager: AudioManager;
+
+	constructor(manager: AudioManager) {
+		this.manager = manager;
+	}
+
+	playLinesCleared(count: number) {
+		const baseFreq = 523.25;
+		const freq = baseFreq * (1 + (count * 0.25));
+
+		this.manager.playSine(freq, 0.3, 0.2);
+		this.manager.playSplash(0.3, 2000, 0.15);
+	}
+
+	playTetrisCleared() {
+		const baseFreq = 523.25;
+		this.manager.playSquare(baseFreq, 0.4, 0.1);
+		setTimeout(() => this.manager.playSquare(baseFreq * 1.25, 0.4, 0.1), 50);
+		setTimeout(() => this.manager.playSquare(baseFreq * 1.5, 0.4, 0.1), 100);
+		setTimeout(() => this.manager.playSquare(baseFreq * 2, 0.6, 0.2), 150);
+		
+		this.manager.playSplash(0.6, 1500, 0.4); 
+		
+		this.manager.playTriangleSlide(400, 1200, 0.5, 0.2);
+	}
+
+	playHardDrop() {
+		this.manager.playTriangle(100, 0.15, 1);
+	}
+
+	playGameOver() {
+		this.manager.playSawtoothSlide(400, 50, 1.5, 0.5);
+		this.manager.playSplash(1.5, 200, 0.3);
 	}
 }

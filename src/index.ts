@@ -1,4 +1,4 @@
-import { AudioManager } from "./audio";
+import { AudioManager, EffectsManager } from "./audio";
 import { Game } from "./game";
 import { LocalController } from "./input";
 import { QuickHUD, HUDPosition } from "./quickhud";
@@ -41,8 +41,9 @@ const recoilSettings: ScreenRecoilSettings = {
 const screenRecoil = new ScreenRecoil(recoilSettings);
 
 const audioManager = new AudioManager();
+const effectsManager = new EffectsManager(audioManager);
 
-new QuickHUD("Settings").setDraggable(true)
+new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 	.addFolder("Game")
 	.addRange("Gravity", 0.1, 10, game.settings.gravity, 0.1, (val) => game.settings.gravity = val)
 	.addRange("Lock Delay", 0.1, 2, game.settings.lockDelay, 0.1, (val) => game.settings.lockDelay= val)
@@ -62,6 +63,15 @@ new QuickHUD("Settings").setDraggable(true)
 
 const stats = new QuickHUD("Statistics", HUDPosition.TopLeft).setDraggable(true)
 
+new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
+	.addFolder("Sound")
+	.addButton("1 Line Cleared", () => effectsManager.playLinesCleared(1))
+	.addButton("2 Line Cleared", () => effectsManager.playLinesCleared(2))
+	.addButton("3 Line Cleared", () => effectsManager.playLinesCleared(3))
+	.addButton("4 Line Cleared", () => effectsManager.playLinesCleared(4))
+	.addButton("Tetris Cleared", () => effectsManager.playTetrisCleared())
+	.addButton("Hard Drop",      () => effectsManager.playHardDrop())
+
 const setRowsClearedLabel = stats.addLabeledValue("Rows Cleared", 0);
 
 let totalClearedRows = 0;
@@ -70,20 +80,10 @@ game.events.on("lineClear", (count) => {
 	totalClearedRows += count;
 	setRowsClearedLabel(totalClearedRows);
 
-	const baseFreq = 523.25;
 	if (count < 4) {
-		const freq = baseFreq * (1 + (count * 0.25));
-		audioManager.playSine(freq, 0.3, 0.2);
-		audioManager.playSplash(0.3, 2000, 0.15);
+		effectsManager.playLinesCleared(count);
 	} else {
-		audioManager.playSquare(baseFreq, 0.4, 0.1);
-		setTimeout(() => audioManager.playSquare(baseFreq * 1.25, 0.4, 0.1), 50);
-		setTimeout(() => audioManager.playSquare(baseFreq * 1.5, 0.4, 0.1), 100);
-		setTimeout(() => audioManager.playSquare(baseFreq * 2, 0.6, 0.2), 150);
-
-		audioManager.playSplash(0.6, 1500, 0.4); 
-		
-		audioManager.playTriangleSlide(400, 1200, 0.5, 0.2);
+		effectsManager.playTetrisCleared();
 	}
 });
 
@@ -91,13 +91,12 @@ game.events.on("lock", () => {
 	screenRecoil.trigger(100);
 })
 
-game.events.on("hardDrop", () => {
-	audioManager.playTriangle(100, 0.15, 1);
-})
+game.events.on("hardDrop", () => effectsManager.playHardDrop());
+game.events.on("gameOver", () => effectsManager.playGameOver());
 
 let lastTime = 0;
 function loop(time: number) {
-	const dt = (time - lastTime) / 1000;
+	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
 	game.update(dt);
