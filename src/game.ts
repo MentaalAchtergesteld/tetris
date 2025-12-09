@@ -169,6 +169,7 @@ export class Game {
 		while (this.canMove(0, testedY)) testedY++;
 		this.currentPiece.y += testedY-1;
 		this.events.emit("hardDrop", undefined);
+		this.events.emit("lock", undefined);
 		this.endTurn();
 	}
 
