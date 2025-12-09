@@ -1,6 +1,6 @@
 import { Board } from "./board.ts";
 import { EventEmitter } from "./event_emitter.ts";
-import { Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceShape, getRotatedPiece } from "./piece";
+import { MAX_PIECE_BOUNDS, Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceCentered, drawPieceShape, getRotatedPiece } from "./piece";
 import { GameSettings, DEFAULT_GAME_SETTINGS } from "./settings.ts";
 import { ColorTheme } from "./theme.ts";
 
@@ -91,6 +91,8 @@ export class Game {
 
 	reset() {
 		this.pieceQueue = [];
+		this.holdPiece = null;
+		this.currentPiece = null;
 		this.board.initializeGrid();
 		this.refillQueue();
 		this.nextPiece();
@@ -116,15 +118,20 @@ export class Game {
 	}
 
 	swapHold() {
-		if (this.hasSwappedHold || this.gameOver) return;
-		const current = this.currentPiece;
-		this.currentPiece = this.holdPiece;
-		this.holdPiece = current;
+		if (this.hasSwappedHold || this.gameOver || !this.currentPiece) return;
+
+		const pieceToHold = this.currentPiece;
+		const pieceFromHold = this.holdPiece;
+
+		this.currentPiece = pieceFromHold;
+		this.holdPiece = pieceToHold;
 
 		this.hasSwappedHold = true;
 
+		this.resetPieceState(this.holdPiece);
+
 		if (this.currentPiece) this.resetPieceState(this.currentPiece)
-		else this.nextPiece();
+			else this.nextPiece();
 
 		this.lockTimer = 0;
 		this.gravityTimer = 0;
@@ -209,37 +216,64 @@ export class Game {
 	}
 
 	drawHoldPiece(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
-		let xOffset = -this.settings.blockSize*4.5;
+		const width = (MAX_PIECE_BOUNDS.width+.5)*this.settings.blockSize;
+		const height = (MAX_PIECE_BOUNDS.height+1)*this.settings.blockSize;
+
+		const gap = this.settings.blockSize*0.5;
+
+		const x = -(width+gap);
+		const y = 0;
+
 		ctx.fillStyle = theme.BoardBackground;
-		ctx.fillRect(xOffset-this.settings.blockSize, 0, Math.abs(xOffset-this.settings.blockSize), this.settings.blockSize * 4);
+		ctx.fillRect(x, y, width, height);
+
+		const borderWidth = 4;
+		const offset = borderWidth/2;
+
+		ctx.strokeStyle = theme.BoardBorder;
+		ctx.lineWidth = borderWidth;
+
+		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
+
 		if (!this.holdPiece) return;
-		drawPieceShape(
+
+		drawPieceCentered(
 			this.holdPiece.shape,
-			xOffset,
-			0,
+			x, y,
+			width, height,
 			this.settings.blockSize,
-			false,
-			theme,
-			ctx
+			theme, ctx
 		);
 	}
 
 	drawPieceQueue(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
-		let xOffset = (this.board.width + 1) * this.settings.blockSize;
-		let entryHeight = this.settings.blockSize * 2.5;
+		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*this.settings.blockSize;
+
+		const height = entryHeight * this.PREVIEW_COUNT;
+		const width = (MAX_PIECE_BOUNDS.width+.5)*this.settings.blockSize;
+
+		const x = (this.board.width+1) * this.settings.blockSize;
+		const y = 0;
 
 		ctx.fillStyle = theme.BoardBackground;
-		ctx.fillRect(this.board.width*this.settings.blockSize, 0, 5*this.settings.blockSize, entryHeight*this.PREVIEW_COUNT);
+		ctx.fillRect(x, y, width, height);
+
+		const borderWidth = 4;
+		const offset = borderWidth/2;
+
+		ctx.strokeStyle = theme.BoardBorder;
+		ctx.lineWidth = borderWidth;
+
+		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
 
 		for (let i = 0; i < this.PREVIEW_COUNT; i++) {
-			drawPieceShape(
+			console.log(entryHeight*i);
+			drawPieceCentered(
 				TETROMINOS[this.pieceQueue[i]],
-				xOffset,
-				entryHeight*i,
+				x, entryHeight*i,
+				width, entryHeight,
 				this.settings.blockSize,
-				false,
-				theme,
-				ctx
+				theme, ctx
 			);
 		}
 	}

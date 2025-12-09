@@ -48,41 +48,86 @@ export interface Piece {
 };
 
 export function createPiece(type: TetrominoType): Piece {
-	return {
-		x: 0,
-		y: 0,
-		type,
-		shape: TETROMINOS[type].map((row: readonly number[])=> [...row]),
-	};
-}
-
-function rotateMatrix(matrix: number[][], dir: -1 | 1): number[][] {
-	const transposed = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
-
-	if (dir == 1) {
-		return transposed.map(row => row.reverse());
-	} else {
-		return transposed.reverse();
-	}
+	const shape = TETROMINOS[type].map((row: readonly number[])=> [...row]);
+	return { x: 0, y: 0, type, shape };
 }
 
 export function getRotatedPiece(piece: Piece, dir: -1 | 1): Piece {
-	return {
-		...piece,
-		shape: rotateMatrix(piece.shape, dir),
+	const matrix = piece.shape;
+	const transposed = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));
+	
+	const rotated = dir === 1 
+		? transposed.map(row => row.reverse())
+		: transposed.reverse();
+
+	return { ...piece, shape: rotated };
+}
+
+export function createPieceBag(): TetrominoType[] {
+	const bag = Object.keys(TETROMINOS) as TetrominoType[];
+		
+	for (let i = bag.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[bag[i], bag[j]] = [bag[j], bag[i]];
+	}
+	
+	return bag;
+}
+
+export function pieceIndexToColor(index: number, theme: ColorTheme): Color {
+	switch (index) {
+		case 1: return theme.PieceI;
+		case 2: return theme.PieceJ;
+		case 3: return theme.PieceL;
+		case 4: return theme.PieceO;
+		case 5: return theme.PieceS;
+		case 6: return theme.PieceT;
+		case 7: return theme.PieceZ;
+		default: return "transparent";
 	}
 }
 
-export const COLORS = [
-    null,       // 0 = Leeg
-    '#00f0f0',  // 1 = I (Cyaan)
-    '#0000f0',  // 2 = J (Blauw)
-    '#f0a000',  // 3 = L (Oranje)
-    '#f0f000',  // 4 = O (Geel)
-    '#00f000',  // 5 = S (Groen)
-    '#a000f0',  // 6 = T (Paars)
-    '#f00000',  // 7 = Z (Rood)
-];
+export function getPieceBounds(shape: number[][]) {
+	let minX = shape.length, maxX = -1;
+	let minY = shape.length, maxY = -1;
+
+	shape.forEach((row, y) => {
+		row.forEach((val, x) => {
+			if (val == 0) return;
+			if (x < minX) minX = x;
+			if (x > maxX) maxX = x;
+			if (y < minY) minY = y;
+			if (y > maxY) maxY= y;
+			
+		})
+	})
+
+	return {
+		x: minX, y: minY,
+		width: maxX - minX + 1,
+		height: maxY - minY + 1,	
+	}
+}
+
+export function getMaxPieceBounds() {
+	let maxW = 0;
+	let maxH = 0;
+
+	(Object.keys(TETROMINOS) as TetrominoType[]).forEach(type => {
+		const shape = TETROMINOS[type];
+		const bounds = getPieceBounds(shape);
+
+		if (bounds.width > maxW) maxW = bounds.width;
+		if (bounds.height > maxH) maxH = bounds.height;
+	});
+
+	return {
+		width: maxW,
+		height: maxH
+	}
+}
+
+export const MAX_PIECE_BOUNDS = getMaxPieceBounds();
 
 export function drawPieceShape(
 	piece: number[][],
@@ -106,31 +151,34 @@ export function drawPieceShape(
 	});
 }
 
-function shuffleArray(array: any[]) {
-	let currentIndex = array.length;
-	while (currentIndex != 0) {
-		let randomIndex = Math.floor(Math.random() * currentIndex);
-		currentIndex--;
+export function drawPieceCentered(
+	shape: number[][],
+	bx: number, by: number, bw: number, bh: number,
+	size: number,
+	theme: ColorTheme,
+	ctx: CanvasRenderingContext2D
+) {
+	const bounds = getPieceBounds(shape);
+	const pixelW = bounds.width * size;
+	const pixelH = bounds.height * size;
 
-		[array[currentIndex], array[randomIndex]] = [array[randomIndex], array[currentIndex]];
-	}
-}
+	const startX = bx + (bw - pixelW) / 2 - (bounds.x * size);
+	const startY = by + (bh - pixelH) / 2 - (bounds.y * size);
 
-export function createPieceBag(): TetrominoType[] {
-	let bag = Object.keys(TETROMINOS) as TetrominoType[];
-	shuffleArray(bag);
-	return bag;
-}
+	shape.forEach((row, dy) => {
+		row.forEach((val, dx) => {
+			if (val == 0) return;
 
-export function pieceIndexToColor(index: number, theme: ColorTheme): Color {
-	switch (index) {
-		case 1: return theme.PieceI;
-		case 2: return theme.PieceJ;
-		case 3: return theme.PieceL;
-		case 4: return theme.PieceO;
-		case 5: return theme.PieceS;
-		case 6: return theme.PieceT;
-		case 7: return theme.PieceZ;
-		default: return "transparent";
-	}
+			const px = startX + dx * size;
+			const py = startY + dy * size;
+
+			const color = pieceIndexToColor(val, theme);
+			ctx.fillStyle = color;
+			ctx.fillRect(px, py, size, size);
+
+			ctx.strokeStyle = theme.PieceBorder;
+			ctx.lineWidth = 1;
+			ctx.strokeRect(px, py, size, size);
+		})
+	})
 }

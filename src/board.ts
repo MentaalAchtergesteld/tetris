@@ -1,4 +1,4 @@
-import { COLORS, Piece, pieceIndexToColor } from "./piece";
+import { Piece, pieceIndexToColor } from "./piece";
 import { ColorTheme } from "./theme";
 
 export class Board {
@@ -68,6 +68,7 @@ export class Board {
 		for (let x = 0; x < this.width; x++) {
 			for (let y = 0; y < this.height; y++) {
 				ctx.strokeStyle = theme.TileBorder;
+				ctx.lineWidth = 2;
 				ctx.strokeRect(x*blockSize, y*blockSize, blockSize, blockSize);
 
 				if (this.grid[y][x] == 0) continue;
@@ -82,10 +83,10 @@ export class Board {
 		ctx.strokeStyle = theme.BoardBorder;
 		ctx.lineWidth = borderWidth;
 		ctx.beginPath();
-		ctx.moveTo(-offset, -offset);
+		ctx.moveTo(-offset, -borderWidth);
 		ctx.lineTo(-offset, height+offset);
 		ctx.lineTo(width+offset, height+offset);
-		ctx.lineTo(width+offset, -offset);
+		ctx.lineTo(width+offset, -borderWidth);
 		ctx.stroke();
 	}
 }
