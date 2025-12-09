@@ -49,9 +49,9 @@ new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 	.addRange("Lock Delay", 0.1, 2, game.settings.lockDelay, 0.1, (val) => game.settings.lockDelay= val)
 
 	.parent().addFolder("Handling")
-	.addRange("DAS", 0.01, 1, controller.settings.das, 0.005, (val) => controller.settings.das = val)
-	.addRange("ARR", 0.01, 1, controller.settings.arr, 0.001, (val) => controller.settings.arr= val)
-	.addRange("SDF", 1, 1000, controller.settings.sdf, 1, (val) => controller.settings.sdf= val)
+	.addRange("Delayed Auto Shift", 0.01, 1, controller.settings.das, 0.005, (val) => controller.settings.das = val)
+	.addRange("Auto Repeat Rate", 0.01, 1, controller.settings.arr, 0.001, (val) => controller.settings.arr= val)
+	.addRange("Soft Drop Factor", 1, 1000, controller.settings.sdf, 1, (val) => controller.settings.sdf= val)
 
 	.parent().addFolder("Visual")
 	.addRange("Shake Intensity Mult", 0, 20, shakeIntensityMultiplier, 0.5, (val) => shakeIntensityMultiplier = val)
