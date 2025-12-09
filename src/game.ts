@@ -2,6 +2,7 @@ import { Board } from "./board.ts";
 import { EventEmitter } from "./event_emitter.ts";
 import { Piece, TETROMINOS, TetrominoType, createPiece, createPieceBag, drawPieceShape, getRotatedPiece } from "./piece";
 import { GameSettings, DEFAULT_GAME_SETTINGS } from "./settings.ts";
+import { ColorTheme } from "./theme.ts";
 
 export interface GameEvents {
 	"start": void,
@@ -204,22 +205,43 @@ export class Game {
 		this.handleLock(dt);
 	}
 
-	drawHoldPiece(ctx: CanvasRenderingContext2D) {
-		if (!this.holdPiece) return;
+	drawHoldPiece(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
 		let xOffset = -this.settings.blockSize*4.5;
-		drawPieceShape(this.holdPiece.shape, xOffset, 0, this.settings.blockSize, false, ctx);
+		ctx.fillStyle = theme.BoardBackground;
+		ctx.fillRect(xOffset-this.settings.blockSize, 0, Math.abs(xOffset-this.settings.blockSize), this.settings.blockSize * 4);
+		if (!this.holdPiece) return;
+		drawPieceShape(
+			this.holdPiece.shape,
+			xOffset,
+			0,
+			this.settings.blockSize,
+			false,
+			theme,
+			ctx
+		);
 	}
 
-	drawPieceQueue(ctx: CanvasRenderingContext2D) {
+	drawPieceQueue(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
 		let xOffset = (this.board.width + 1) * this.settings.blockSize;
 		let entryHeight = this.settings.blockSize * 2.5;
 
+		ctx.fillStyle = theme.BoardBackground;
+		ctx.fillRect(this.board.width*this.settings.blockSize, 0, 5*this.settings.blockSize, entryHeight*this.PREVIEW_COUNT);
+
 		for (let i = 0; i < this.PREVIEW_COUNT; i++) {
-			drawPieceShape(TETROMINOS[this.pieceQueue[i]], xOffset, entryHeight*i, this.settings.blockSize, false, ctx);
+			drawPieceShape(
+				TETROMINOS[this.pieceQueue[i]],
+				xOffset,
+				entryHeight*i,
+				this.settings.blockSize,
+				false,
+				theme,
+				ctx
+			);
 		}
 	}
 
-	drawDropPreview(ctx: CanvasRenderingContext2D) {
+	drawDropPreview(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
 		if (!this.currentPiece) return;
 		let lowestY = 0;
 		while (this.canMove(0, lowestY)) lowestY++;
@@ -230,27 +252,29 @@ export class Game {
 			lowestY*this.settings.blockSize,
 			this.settings.blockSize,
 			true,
+			theme,
 			ctx
 		);
 	}
 
-	draw(ctx: CanvasRenderingContext2D) {
+	draw(theme: ColorTheme, ctx: CanvasRenderingContext2D) {
 		const totalWidth = this.board.width * this.settings.blockSize;
 		const totalHeight = this.board.height * this.settings.blockSize;
 
 		ctx.translate(-totalWidth/2, -totalHeight/2);
 
-		this.board.draw(this.settings.blockSize, ctx);
+		this.drawPieceQueue(theme, ctx);
+		this.drawHoldPiece(theme, ctx);
+		this.board.draw(this.settings.blockSize, theme, ctx);
 		if (this.currentPiece) drawPieceShape(
 			this.currentPiece.shape,
 			this.currentPiece.x*this.settings.blockSize,
 			this.currentPiece.y*this.settings.blockSize,
 			this.settings.blockSize,
 			false,
+			theme,
 			ctx
 		);
-		this.drawHoldPiece(ctx);
-		this.drawDropPreview(ctx);
-		this.drawPieceQueue(ctx);
+		this.drawDropPreview(theme, ctx);
 	}
 }

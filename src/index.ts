@@ -1,6 +1,8 @@
+import { AudioManager } from "./audio";
 import { Game } from "./game";
 import { LocalController } from "./input";
 import { QuickHUD, HUDPosition } from "./quickhud";
+import { DEFAULT_THEME } from "./theme";
 import { ScreenRecoil, ScreenRecoilSettings, ScreenShake } from "./visuals";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
@@ -23,11 +25,6 @@ setCanvasToWindowSize();
 
 document.body.appendChild(canvas);
 
-function renderGame(game: Game, ctx: CanvasRenderingContext2D) {
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
-	game.draw(ctx);
-}
-
 const game = new Game();
 game.nextPiece();
 
@@ -42,6 +39,8 @@ const recoilSettings: ScreenRecoilSettings = {
 	mass: 1
 };
 const screenRecoil = new ScreenRecoil(recoilSettings);
+
+const audioManager = new AudioManager();
 
 new QuickHUD("Settings").setDraggable(true)
 	.addFolder("Game")
@@ -70,10 +69,30 @@ game.events.on("lineClear", (count) => {
 	screenShake.trigger(shakeIntensityMultiplier * count);
 	totalClearedRows += count;
 	setRowsClearedLabel(totalClearedRows);
+
+	const baseFreq = 523.25;
+	if (count < 4) {
+		const freq = baseFreq * (1 + (count * 0.25));
+		audioManager.playSine(freq, 0.3, 0.2);
+		audioManager.playSplash(0.3, 2000, 0.15);
+	} else {
+		audioManager.playSquare(baseFreq, 0.4, 0.1);
+		setTimeout(() => audioManager.playSquare(baseFreq * 1.25, 0.4, 0.1), 50);
+		setTimeout(() => audioManager.playSquare(baseFreq * 1.5, 0.4, 0.1), 100);
+		setTimeout(() => audioManager.playSquare(baseFreq * 2, 0.6, 0.2), 150);
+
+		audioManager.playSplash(0.6, 1500, 0.4); 
+		
+		audioManager.playTriangleSlide(400, 1200, 0.5, 0.2);
+	}
 });
 
 game.events.on("lock", () => {
 	screenRecoil.trigger(100);
+})
+
+game.events.on("hardDrop", () => {
+	audioManager.playTriangle(100, 0.15, 1);
 })
 
 let lastTime = 0;
@@ -84,13 +103,16 @@ function loop(time: number) {
 	game.update(dt);
 	controller.update(dt);
 
-	ctx.clearRect(0, 0, canvas.width, canvas.height);
+	ctx.fillStyle = DEFAULT_THEME.Background;
+	ctx.fillRect(0, 0, canvas.width, canvas.height);
+
 	ctx.save();
 	ctx.translate(canvas.width/2, canvas.height/2);
 
 	screenRecoil.update(ctx, dt);
 	screenShake.update(ctx, dt);
-	renderGame(game, ctx);
+
+	game.draw(DEFAULT_THEME, ctx);
 
 	ctx.restore();
 

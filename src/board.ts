@@ -1,4 +1,5 @@
-import { COLORS, Piece } from "./piece";
+import { COLORS, Piece, pieceIndexToColor } from "./piece";
+import { ColorTheme } from "./theme";
 
 export class Board {
 	width: number;
@@ -57,21 +58,34 @@ export class Board {
 		console.table(this.grid);
 	}
 
-	draw(blockSize: number, ctx: CanvasRenderingContext2D) {
+	draw(blockSize: number, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
+		const width = this.width * blockSize;
+		const height = this.height * blockSize;
+
+		ctx.fillStyle = theme.BoardBackground;
+		ctx.fillRect(0, 0, width, height);
+
 		for (let x = 0; x < this.width; x++) {
 			for (let y = 0; y < this.height; y++) {
-				ctx.fillStyle = "hsla(0, 0%, 15%, 0.1)";
-				ctx.strokeStyle = "hsla(0, 0%, 5%, 0.1)";
-				ctx.fillRect(x*blockSize, y*blockSize, blockSize, blockSize);
+				ctx.strokeStyle = theme.TileBorder;
 				ctx.strokeRect(x*blockSize, y*blockSize, blockSize, blockSize);
 
 				if (this.grid[y][x] == 0) continue;
-				const blockColor = COLORS[this.grid[y][x]] || "transparent";
+				const blockColor = pieceIndexToColor(this.grid[y][x], theme);
 				ctx.fillStyle = blockColor;
-				ctx.strokeStyle  = "hsla(0, 0%, 5%, 1.0)";
 				ctx.fillRect(x*blockSize, y*blockSize, blockSize, blockSize);
-				ctx.strokeRect(x*blockSize, y*blockSize, blockSize, blockSize);
 			}
 		}
+
+		const borderWidth = 4;
+		const offset = borderWidth/2;
+		ctx.strokeStyle = theme.BoardBorder;
+		ctx.lineWidth = borderWidth;
+		ctx.beginPath();
+		ctx.moveTo(-offset, -offset);
+		ctx.lineTo(-offset, height+offset);
+		ctx.lineTo(width+offset, height+offset);
+		ctx.lineTo(width+offset, -offset);
+		ctx.stroke();
 	}
 }

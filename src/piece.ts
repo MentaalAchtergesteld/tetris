@@ -1,3 +1,5 @@
+import { Color, ColorTheme } from "./theme";
+
 export const TETROMINOS = {
 	I: [
 		[0, 0, 0, 0],
@@ -82,14 +84,22 @@ export const COLORS = [
     '#f00000',  // 7 = Z (Rood)
 ];
 
-export function drawPieceShape(piece: number[][], x: number, y: number, size: number, isPreview: boolean, ctx: CanvasRenderingContext2D) {
+export function drawPieceShape(
+	piece: number[][],
+	x: number,
+	y: number,
+	size: number,
+	isPreview: boolean,
+	theme: ColorTheme,
+	ctx: CanvasRenderingContext2D
+) {
 	piece.forEach((row: number[], dy: number) => {
 		row.forEach((value: number, dx: number) => {
 			if (value == 0) return;
-			ctx.fillStyle = isPreview ? "hsla(0, 0%, 15%, 0.5)" : COLORS[value] || "white";
+			ctx.fillStyle = isPreview ? theme.PiecePreview : pieceIndexToColor(value, theme);
 			ctx.fillRect(x + dx*size, y + dy*size, size, size);
 
-			ctx.strokeStyle = "hsla(0, 0%, 5%, 0.5)";
+			ctx.strokeStyle = theme.PieceBorder;
 			ctx.lineWidth = 1;
 			ctx.strokeRect(x + dx*size, y + dy*size, size, size);
 		})
@@ -110,4 +120,17 @@ export function createPieceBag(): TetrominoType[] {
 	let bag = Object.keys(TETROMINOS) as TetrominoType[];
 	shuffleArray(bag);
 	return bag;
+}
+
+export function pieceIndexToColor(index: number, theme: ColorTheme): Color {
+	switch (index) {
+		case 1: return theme.PieceI;
+		case 2: return theme.PieceJ;
+		case 3: return theme.PieceL;
+		case 4: return theme.PieceO;
+		case 5: return theme.PieceS;
+		case 6: return theme.PieceT;
+		case 7: return theme.PieceZ;
+		default: return "transparent";
+	}
 }
