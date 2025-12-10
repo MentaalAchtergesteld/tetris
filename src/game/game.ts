@@ -45,7 +45,6 @@ export class Game {
 	public board: Board;
 	public queue: PieceQueue;
 	public hold: HoldContainer;
-	public timer: GameTimer;
 
 	public currentPiece: Piece | null = null;
 
@@ -63,7 +62,6 @@ export class Game {
 		this.board = new Board(settings.boardWidth, settings.boardHeight);
 		this.queue = new PieceQueue();
 		this.hold = new HoldContainer();
-		this.timer = new GameTimer();
 
 		this.reset();
 	}
@@ -71,7 +69,6 @@ export class Game {
 	reset() {
 		this.queue.reset();
 		this.hold.reset();
-		this.timer.reset();
 		this.board.reset();
 
 		this.lockTimer = 0;
@@ -85,7 +82,6 @@ export class Game {
 	start() {
 		this.currentPiece = createPiece(this.queue.getNext());
 		this.resetCurrentPiece();
-		this.timer.start();
 	}
 
 	private resetCurrentPiece() {
@@ -206,7 +202,6 @@ export class Game {
 	public update(dt: number) {
 		if (!this.currentPiece || this.gameOver) return;
 
-		this.timer.update(dt);
 		this.updateGravity(dt);
 		this.updateLock(dt);
 	}

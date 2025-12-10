@@ -4,19 +4,19 @@ import { GameTimer } from "../game/game_timer";
 import { HoldContainer } from "../game/hold_container";
 import { PieceQueue } from "../game/piece_queue";
 import { drawPieceCentered, drawPieceShape, MAX_PIECE_BOUNDS, pieceIndexToColor, TETROMINOS } from "../piece";
-import { ColorTheme } from "../theme";
+import { GameTheme } from "../theme";
 import { drawLabel, getTextHeight } from "../visuals";
 
-function drawBoard(board: Board, blockSize: number, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
+function drawBoard(board: Board, blockSize: number, theme: GameTheme, ctx: CanvasRenderingContext2D) {
 	const width = board.width * blockSize;
 	const height = board.height * blockSize;
 
-	ctx.fillStyle = theme.BoardBackground;
+	ctx.fillStyle = theme.Colors.BoardBackground;
 	ctx.fillRect(0, 0, width, height);
 
 	for (let x = 0; x < board.width; x++) {
 		for (let y = 0; y < board.height; y++) {
-			ctx.strokeStyle = theme.TileBorder;
+			ctx.strokeStyle = theme.Colors.PieceBorder;
 			ctx.lineWidth = 2;
 			ctx.strokeRect(x*blockSize, y*blockSize, blockSize, blockSize);
 
@@ -29,7 +29,7 @@ function drawBoard(board: Board, blockSize: number, theme: ColorTheme, ctx: Canv
 
 	const borderWidth = 4;
 	const offset = borderWidth/2;
-	ctx.strokeStyle = theme.BoardBorder;
+	ctx.strokeStyle = theme.Colors.BoardBorder;
 	ctx.lineWidth = borderWidth;
 	ctx.beginPath();
 	ctx.moveTo(-offset, -borderWidth);
@@ -39,27 +39,27 @@ function drawBoard(board: Board, blockSize: number, theme: ColorTheme, ctx: Canv
 	ctx.stroke();
 }
 
-function drawHoldContainer(container: HoldContainer, blockSize: number, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
+function drawHoldContainer(container: HoldContainer, blockSize: number, theme: GameTheme, ctx: CanvasRenderingContext2D) {
 	const width = (MAX_PIECE_BOUNDS.width+.5)*blockSize;
 	const height = (MAX_PIECE_BOUNDS.height+1)*blockSize;
 
 	const labelText = "hold";
-	const textHeight = getTextHeight(labelText, 32, "Audiowide", ctx);
+	const textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
 
 	const x = 0;
 	let y = textHeight;
 
-	drawLabel(labelText, x, y, 32, "Audiowide", theme.BoardBorder, ctx);
+	drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.BoardBorder, ctx);
 
 	y += 8;
 
-	ctx.fillStyle = theme.BoardBackground;
+	ctx.fillStyle = theme.Colors.BoardBackground;
 	ctx.fillRect(x, y, width, height);
 
 	const borderWidth = 4;
 	const offset = borderWidth/2;
 
-	ctx.strokeStyle = theme.BoardBorder;
+	ctx.strokeStyle = theme.Colors.BoardBorder;
 	ctx.lineWidth = borderWidth;
 
 	ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
@@ -75,7 +75,7 @@ function drawHoldContainer(container: HoldContainer, blockSize: number, theme: C
 	);
 }
 
-function drawPieceQueue(queue: PieceQueue, blockSize: number, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
+function drawPieceQueue(queue: PieceQueue, blockSize: number, theme: GameTheme, ctx: CanvasRenderingContext2D) {
 	const PREVIEW_COUNT = 5;
 	const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*blockSize;
 
@@ -83,22 +83,22 @@ function drawPieceQueue(queue: PieceQueue, blockSize: number, theme: ColorTheme,
 	const width = (MAX_PIECE_BOUNDS.width+.5)*blockSize;
 
 	const labelText = "queue";
-	const textHeight = getTextHeight(labelText, 32, "Audiowide", ctx);
+	const textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
 
 	const x = 0;
 	let y = textHeight;
 
-	drawLabel(labelText, x, y, 32, "Audiowide", theme.BoardBorder, ctx);
+	drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.TextPrimary, ctx);
 
 	y += 8;
 
-	ctx.fillStyle = theme.BoardBackground;
+	ctx.fillStyle = theme.Colors.BoardBackground;
 	ctx.fillRect(x, y, width, height);
 
 	const borderWidth = 4;
 	const offset = borderWidth/2;
 
-	ctx.strokeStyle = theme.BoardBorder;
+	ctx.strokeStyle = theme.Colors.BoardBorder;
 	ctx.lineWidth = borderWidth;
 
 	ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
@@ -116,25 +116,25 @@ function drawPieceQueue(queue: PieceQueue, blockSize: number, theme: ColorTheme,
 	}
 }
 
-function drawTimer(timer: GameTimer, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
+function drawTimer(timer: GameTimer, theme: GameTheme, ctx: CanvasRenderingContext2D) {
 	const labelText = "time";
-	let textHeight = getTextHeight(labelText, 16, "Audiowide", ctx);
+	let textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
 
 	const x = 0;
 	let y = textHeight;
 
-	drawLabel(labelText, x, y, 24, "Audiowide", theme.BoardBorder, ctx);
+	drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.TextPrimary, ctx);
 
 	let timerText = timer.format();
-	y += getTextHeight(timerText, 32, "Share Tech Mono", ctx);
+	y += getTextHeight(timerText, theme.Typography.DataFontSize, theme.Typography.DataFontFamily, ctx);
 	y += 8;
-	drawLabel(timer.format(), x, y, 32, "Share Tech Mono", theme.BoardBorder, ctx);
+	drawLabel(timer.format(), x, y, theme.Typography.DataFontSize, theme.Typography.DataFontFamily, theme.Colors.TextPrimary, ctx);
 }
 
-export function drawGame(game: Game, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
-	const blockSize = game.settings.blockSize;
+export function drawGame(game: Game, theme: GameTheme, ctx: CanvasRenderingContext2D) {
+	const blockSize = theme.Layout.BlockSize;
 
-	const panelGap = 16;
+	const panelGap = theme.Layout.PanelGap;
 	const panelWidth = (MAX_PIECE_BOUNDS.width+0.5)*blockSize;
 	const boardWidth = game.settings.boardWidth * blockSize;
 	const boardHeight = game.settings.boardHeight * blockSize;
@@ -151,7 +151,6 @@ export function drawGame(game: Game, theme: ColorTheme, ctx: CanvasRenderingCont
 	ctx.translate(leftX, 0);
 	drawHoldContainer(game.hold, blockSize, theme, ctx);
 	ctx.translate(0, boardHeight-32);
-	drawTimer(game.timer, theme, ctx);
 	ctx.restore();
 
 	// BOARD

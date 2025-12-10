@@ -1,4 +1,4 @@
-import { Color, ColorTheme } from "./theme";
+import { Color, GameTheme } from "./theme";
 
 export const TETROMINOS = {
 	I: [
@@ -81,15 +81,15 @@ export function createPieceBag(): TetrominoType[] {
 	return bag;
 }
 
-export function pieceIndexToColor(index: number, theme: ColorTheme): Color {
+export function pieceIndexToColor(index: number, theme: GameTheme): Color {
 	switch (index) {
-		case 1: return theme.PieceI;
-		case 2: return theme.PieceJ;
-		case 3: return theme.PieceL;
-		case 4: return theme.PieceO;
-		case 5: return theme.PieceS;
-		case 6: return theme.PieceT;
-		case 7: return theme.PieceZ;
+		case 1: return theme.Colors.PieceI;
+		case 2: return theme.Colors.PieceJ;
+		case 3: return theme.Colors.PieceL;
+		case 4: return theme.Colors.PieceO;
+		case 5: return theme.Colors.PieceS;
+		case 6: return theme.Colors.PieceT;
+		case 7: return theme.Colors.PieceZ;
 		default: return "transparent";
 	}
 }
@@ -142,16 +142,16 @@ export function drawPieceShape(
 	y: number,
 	size: number,
 	isPreview: boolean,
-	theme: ColorTheme,
+	theme: GameTheme,
 	ctx: CanvasRenderingContext2D
 ) {
 	piece.forEach((row: number[], dy: number) => {
 		row.forEach((value: number, dx: number) => {
 			if (value == 0) return;
-			ctx.fillStyle = isPreview ? theme.PiecePreview : pieceIndexToColor(value, theme);
+			ctx.fillStyle = isPreview ? theme.Colors.PiecePreview : pieceIndexToColor(value, theme);
 			ctx.fillRect(x + dx*size, y + dy*size, size, size);
 
-			ctx.strokeStyle = theme.PieceBorder;
+			ctx.strokeStyle = theme.Colors.PieceBorder;
 			ctx.lineWidth = 1;
 			ctx.strokeRect(x + dx*size, y + dy*size, size, size);
 		})
@@ -162,7 +162,7 @@ export function drawPieceCentered(
 	shape: number[][],
 	bx: number, by: number, bw: number, bh: number,
 	size: number,
-	theme: ColorTheme,
+	theme: GameTheme,
 	ctx: CanvasRenderingContext2D
 ) {
 	const bounds = getPieceBounds(shape);
@@ -183,7 +183,7 @@ export function drawPieceCentered(
 			ctx.fillStyle = color;
 			ctx.fillRect(px, py, size, size);
 
-			ctx.strokeStyle = theme.PieceBorder;
+			ctx.strokeStyle = theme.Colors.PieceBorder;
 			ctx.lineWidth = 1;
 			ctx.strokeRect(px, py, size, size);
 		})

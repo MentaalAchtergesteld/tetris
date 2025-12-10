@@ -104,7 +104,7 @@ function loop(time: number) {
 	game.update(dt);
 	controller.update(dt);
 
-	ctx.fillStyle = DEFAULT_THEME.Background;
+	ctx.fillStyle = DEFAULT_THEME.Colors.Background;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	ctx.save();
