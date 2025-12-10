@@ -1,7 +1,8 @@
 import { AudioManager, EffectsManager } from "./audio";
-import { Game } from "./game";
+import { Game } from "./game/game";
 import { LocalController } from "./input";
 import { QuickHUD, HUDPosition } from "./quickhud";
+import { drawGame } from "./render/game";
 import { DEFAULT_THEME } from "./theme";
 import { ScreenRecoil, ScreenRecoilSettings, ScreenShake } from "./visuals";
 
@@ -26,7 +27,7 @@ setCanvasToWindowSize();
 document.body.appendChild(canvas);
 
 const game = new Game();
-game.nextPiece();
+game.reset();
 
 const controller = new LocalController(game);
 
@@ -112,7 +113,7 @@ function loop(time: number) {
 	screenRecoil.update(ctx, dt);
 	screenShake.update(ctx, dt);
 
-	game.draw(DEFAULT_THEME, ctx);
+	drawGame(game, DEFAULT_THEME, ctx);
 
 	ctx.restore();
 
@@ -121,6 +122,7 @@ function loop(time: number) {
 
 async function init() {
 	await document.fonts.ready;
+	game.start();
 	requestAnimationFrame(loop);
 }
 

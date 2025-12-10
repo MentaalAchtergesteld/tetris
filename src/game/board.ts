@@ -1,5 +1,4 @@
-import { Piece, pieceIndexToColor } from "./piece";
-import { ColorTheme } from "./theme";
+import { Piece } from "../piece";
 
 export class Board {
 	width: number;
@@ -13,7 +12,11 @@ export class Board {
 		this.initializeGrid();
 	}
 
-	initializeGrid() {
+	reset() {
+		this.initializeGrid();
+	}
+
+	private initializeGrid() {
 		this.grid = Array.from({ length: this.height }, () => Array(this.width).fill(0));
 	}
 
@@ -25,6 +28,16 @@ export class Board {
 			y < this.height &&
 			this.grid[y][x] === 0
 		)
+	}
+
+	isValidPosition(shape: number[][], x: number, y: number): boolean {
+		for (let dy = 0; dy < shape.length; dy++) {
+			for (let dx = 0; dx < shape[dy].length; dx++) {
+				if (shape[dy][dx] == 0) continue;
+				if (!this.isEmpty(x+dx, y+dy)) return false;
+			}
+		}
+		return true;
 	}
 
 	lockPiece(piece: Piece) {
@@ -56,37 +69,5 @@ export class Board {
 
 	print() {
 		console.table(this.grid);
-	}
-
-	draw(blockSize: number, theme: ColorTheme, ctx: CanvasRenderingContext2D) {
-		const width = this.width * blockSize;
-		const height = this.height * blockSize;
-
-		ctx.fillStyle = theme.BoardBackground;
-		ctx.fillRect(0, 0, width, height);
-
-		for (let x = 0; x < this.width; x++) {
-			for (let y = 0; y < this.height; y++) {
-				ctx.strokeStyle = theme.TileBorder;
-				ctx.lineWidth = 2;
-				ctx.strokeRect(x*blockSize, y*blockSize, blockSize, blockSize);
-
-				if (this.grid[y][x] == 0) continue;
-				const blockColor = pieceIndexToColor(this.grid[y][x], theme);
-				ctx.fillStyle = blockColor;
-				ctx.fillRect(x*blockSize, y*blockSize, blockSize, blockSize);
-			}
-		}
-
-		const borderWidth = 4;
-		const offset = borderWidth/2;
-		ctx.strokeStyle = theme.BoardBorder;
-		ctx.lineWidth = borderWidth;
-		ctx.beginPath();
-		ctx.moveTo(-offset, -borderWidth);
-		ctx.lineTo(-offset, height+offset);
-		ctx.lineTo(width+offset, height+offset);
-		ctx.lineTo(width+offset, -borderWidth);
-		ctx.stroke();
 	}
 }

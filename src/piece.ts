@@ -52,6 +52,13 @@ export function createPiece(type: TetrominoType): Piece {
 	return { x: 0, y: 0, type, shape };
 }
 
+export function resetPiece(piece: Piece): Piece {
+	return {
+		...piece,
+		shape: TETROMINOS[piece.type]
+	}
+}
+
 export function getRotatedPiece(piece: Piece, dir: -1 | 1): Piece {
 	const matrix = piece.shape;
 	const transposed = matrix[0].map((_, colIndex) => matrix.map(row => row[colIndex]));

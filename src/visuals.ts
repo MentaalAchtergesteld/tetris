@@ -61,7 +61,7 @@ export class ScreenRecoil {
 
 export function getTextHeight(text: string, fontSize: number, font: string, ctx: CanvasRenderingContext2D): number {
 	ctx.save();
-	ctx.font = `${fontSize}px ${font}, sans-serif`;
+	ctx.font = `${fontSize}px '${font}', sans-serif`;
 	const metrics = ctx.measureText(text);
 	ctx.restore();
 	return metrics.actualBoundingBoxAscent + metrics.actualBoundingBoxDescent;
@@ -78,7 +78,7 @@ export function drawLabel(
 ) {
 	ctx.save();
 
-	ctx.font = `${fontSize}px ${font}, sans-serif`;
+	ctx.font = `${fontSize}px '${font}', sans-serif`;
 	ctx.textAlign = "left";
 	ctx.textBaseline = "bottom";
 

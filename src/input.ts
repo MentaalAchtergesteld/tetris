@@ -1,4 +1,4 @@
-import { Game } from "./game";
+import { Game } from "./game/game";
 import { ControllerSettings, DEFAULT_CONTROLLER_SETTINGS } from "./settings";
 
 class InputState {
@@ -34,7 +34,7 @@ export class LocalController implements Controller {
 	}
 
 	update(dt: number): void {
-		this.game.gravityFactor = this.input.isDown("ArrowDown") ? this.settings.sdf : 1;
+		this.game.gravityMult = this.input.isDown("ArrowDown") ? this.settings.sdf : 1;
 		this.handleMovement(dt);
 		this.handleActions();
 	}
@@ -82,12 +82,12 @@ export class LocalController implements Controller {
 
 		if (this.input.isDown("Space")) {
 			if (!this.hardDropPressed) {
-				this.game.hardDropPiece();
+				this.game.hardDrop();
 				this.hardDropPressed = true;
 			}
 		} else this.hardDropPressed = false;
 
 		if (this.input.isDown("KeyC")) this.game.swapHold();
-		if (this.input.isDown("KeyR")) this.game.reset();
+		if (this.input.isDown("KeyR")) { this.game.reset(); this.game.start(); };
 	}
 }
