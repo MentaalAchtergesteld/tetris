@@ -161,16 +161,6 @@ export function drawGame(game: Game, theme: ColorTheme, ctx: CanvasRenderingCont
 
 	const currentPiece = game.currentPiece;
 	if (currentPiece) {
-		drawPieceShape(
-			currentPiece.shape,
-			currentPiece.x*blockSize,
-			currentPiece.y*blockSize,
-			blockSize,
-			false,
-			theme,
-			ctx
-		);
-
 		let lowest = game.getLowestPosition();
 		drawPieceShape(
 			currentPiece.shape,
@@ -178,6 +168,16 @@ export function drawGame(game: Game, theme: ColorTheme, ctx: CanvasRenderingCont
 			lowest*blockSize,
 			blockSize,
 			true,
+			theme,
+			ctx
+		);
+		
+		drawPieceShape(
+			currentPiece.shape,
+			currentPiece.x*blockSize,
+			currentPiece.y*blockSize,
+			blockSize,
+			false,
 			theme,
 			ctx
 		);
