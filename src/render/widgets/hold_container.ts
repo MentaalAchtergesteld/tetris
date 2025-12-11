@@ -19,38 +19,37 @@ export class HoldContainerWidget extends Widget {
 	}
 
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		console.log("HOLD Y " + y);
-	const { width, height } = this.getMinSize(theme);
+		const { width, height } = this.getMinSize(theme);
 
-	const labelText = "hold";
-	const textSize = measureText(labelText, theme.Typography.TitleFontFamily, theme.Typography.TitleFontSize);
+		const labelText = "hold";
+		const textSize = measureText(labelText, theme.Typography.TitleFontFamily, theme.Typography.TitleFontSize);
 
-	y += textSize.height;
+		y += textSize.height;
 
-	drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.BoardBorder, ctx);
+		drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.BoardBorder, ctx);
 
-	y += 8;
+		y += 8;
 
-	ctx.fillStyle = theme.Colors.BoardBackground;
-	ctx.fillRect(x, y, width, height);
+		ctx.fillStyle = theme.Colors.BoardBackground;
+		ctx.fillRect(x, y, width, height);
 
-	const borderWidth = 4;
-	const offset = borderWidth/2;
+		const borderWidth = 4;
+		const offset = borderWidth/2;
 
-	ctx.strokeStyle = theme.Colors.BoardBorder;
-	ctx.lineWidth = borderWidth;
+		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.lineWidth = borderWidth;
 
-	ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
+		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
 
-	const piece = this.holdPieceProvider();
-	if (!piece) return;
+		const piece = this.holdPieceProvider();
+		if (!piece) return;
 
-	drawPieceCentered(
-		piece.shape,
-		x, y,
-		width, height,
-		theme.Layout.BlockSize,
-		theme, ctx
-	);
-	}
+		drawPieceCentered(
+			piece.shape,
+			x, y,
+			width, height,
+			theme.Layout.BlockSize,
+			theme, ctx
+		);
+		}
 }
