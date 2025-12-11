@@ -307,3 +307,58 @@ export class PieceQueueWidget implements Widget {
 		}
 	}
 }
+
+export class SpacerWidget implements Widget {
+	constructor(private width: number, private height: number) {}
+
+	getWidth(): number { return this.width }
+	getHeight(): number { return this.height }
+	getSize(): { width: number; height: number; } {
+	    return { width: this.getWidth(), height: this.getHeight() }
+	}
+
+	draw(): void {}
+}
+
+export class GameTimerWidget implements Widget {
+	private label: string;
+	private formattedTimeProvider: () => string;
+
+	constructor(label: string, formattedTimeProvider: () => string) {
+		this.label = label;
+		this.formattedTimeProvider = formattedTimeProvider;
+	}
+
+	getWidth(theme: GameTheme): number {
+		return (MAX_PIECE_BOUNDS.width+.5)*theme.Layout.BlockSize;
+	}
+
+	getHeight(theme: GameTheme): number {
+		return 2.5 * theme.Layout.BlockSize;
+	}
+
+	getSize(theme: GameTheme): { width: number; height: number; } {
+		return { width: this.getWidth(theme), height: this.getHeight(theme) } 
+	}
+
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, theme: GameTheme): void {
+		const { width, height } = this.getSize(theme); 
+		
+		const timeText = this.formattedTimeProvider();
+
+		ctx.font = `12px ${theme.Typography.TitleFontFamily}`;
+		ctx.fillStyle = theme.Colors.TextSecondary;
+		ctx.textAlign = "left";
+		ctx.textBaseline = "top";
+		ctx.fillText(this.label, x, y);
+
+		ctx.font = `24px ${theme.Typography.DataFontFamily}`;
+		ctx.fillStyle = theme.Colors.TextPrimary;
+		ctx.textAlign = "right";
+		ctx.textBaseline = "bottom";
+		ctx.fillText(timeText, x+width, y+height);
+
+		ctx.fillStyle = theme.Colors.BoardBorder;
+		ctx.fillRect(x, y + height, width, 2);
+	}
+}

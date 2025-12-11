@@ -7,6 +7,7 @@ import { QuickHUD, HUDPosition } from "./quickhud";
 import { BoardWidget, HoldContainerWidget, HorizontalContainerWidget, PieceQueueWidget } from "./render/widget";
 import { DEFAULT_THEME } from "./theme";
 import { ScreenRecoil, ScreenRecoilSettings, ScreenShake } from "./visuals";
+import { SprintMode } from "./game/modes";
 
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
@@ -29,10 +30,15 @@ setCanvasToWindowSize();
 
 document.body.appendChild(canvas);
 
+const gamemode = new SprintMode();
+
 const game = new Game();
 game.reset();
 
 const controller = new LocalController(game);
+
+gamemode.game = game;
+gamemode.controller = controller;
 
 const screenShake = new ScreenShake();
 let shakeIntensityMultiplier = 3;
@@ -115,8 +121,9 @@ function loop(time: number) {
 	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
-	game.update(dt);
-	controller.update(dt);
+	gamemode.update(dt);
+	// game.update(dt);
+	// controller.update(dt);
 
 	ctx.fillStyle = DEFAULT_THEME.Colors.Background;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -128,7 +135,7 @@ function loop(time: number) {
 	screenRecoil.update(ctx, dt);
 	screenShake.update(ctx, dt);
 
-	UI.draw(ctx, 0, 0, DEFAULT_THEME);
+	gamemode.draw(DEFAULT_THEME, ctx);
 	
 
 	ctx.restore();
