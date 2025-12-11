@@ -4,11 +4,9 @@ import { AudioManager, EffectsManager } from "./audio";
 import { Game } from "./game/game";
 import { LocalController } from "./input";
 import { QuickHUD, HUDPosition } from "./quickhud";
-import { BoardWidget, HoldContainerWidget, HorizontalContainerWidget, PieceQueueWidget } from "./render/widget";
 import { DEFAULT_THEME } from "./theme";
 import { ScreenRecoil, ScreenRecoilSettings, ScreenShake } from "./visuals";
 import { SprintMode } from "./game/modes";
-
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -105,37 +103,21 @@ game.events.on("lock", () => {
 game.events.on("hardDrop", () => effectsManager.playHardDrop());
 game.events.on("gameOver", () => effectsManager.playGameOver());
 
-const UI = new HorizontalContainerWidget([
-	new HoldContainerWidget(() => game.hold.piece),
-	new BoardWidget(
-		() => game.board.grid,
-		() => { return { width: game.board.width, height: game.board.height } },
-		() => game.currentPiece,
-		() => game.getLowestPosition(),
-	),
-	new PieceQueueWidget(() => game.queue.peek(5)),
-], 16);
-
 let lastTime = 0;
 function loop(time: number) {
 	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
 	gamemode.update(dt);
-	// game.update(dt);
-	// controller.update(dt);
-
 	ctx.fillStyle = DEFAULT_THEME.Colors.Background;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	ctx.save();
-	ctx.translate(canvas.width/2, canvas.height/2);
-	ctx.translate(-UI.getWidth(DEFAULT_THEME)/2, -UI.getHeight(DEFAULT_THEME)/2);
 
 	screenRecoil.update(ctx, dt);
 	screenShake.update(ctx, dt);
 
-	gamemode.draw(DEFAULT_THEME, ctx);
+	gamemode.draw(ctx, 0, 0, canvas.width, canvas.height, DEFAULT_THEME);
 	
 
 	ctx.restore();

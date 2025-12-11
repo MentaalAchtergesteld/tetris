@@ -64,9 +64,9 @@ export const DEFAULT_THEME: GameTheme = {
 
 	Typography: {
 		TitleFontFamily: "Audiowide",
-		TitleFontSize: 32,
+		TitleFontSize: 28,
 		DataFontFamily: "Share Tech Mono",
-		DataFontSize: 24,
+		DataFontSize: 25,
 	}
 
 }
