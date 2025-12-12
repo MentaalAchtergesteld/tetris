@@ -9,6 +9,7 @@ import { Label } from "../../ui/widgets/label";
 import { Center, HBox, Overlay, SizedBox, Spacer, VBox } from "../../ui/widgets/layout";
 import { Conditional } from "../../ui/widgets/logic";
 import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
+import { StandardGame } from "../../ui/widgets/standard_game";
 import { DEFAULT_GAME_SETTINGS, Game } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
@@ -41,37 +42,24 @@ export class BlitzMode implements GameMode {
 	}
 
 	private createGameLayer(): Widget {
-		const LEFT_COLUMN = new VBox([
-			new Label(() => "hold", "title", "left").setFill(true),
-			new SizedBox(0, 8),
-			new HoldContainerWidget(() => this.game.getHoldType()),
-			new Spacer(),
-			new Label(() => "blitz", "title", "right").setFill(true),
-			new SizedBox(0, 16),
-			new Label(() => "time", "title", "right").setFill(true),
-			new Label(() => this.timer.format(), "data", "right").setFill(true),
-			new SizedBox(0, 16),
-			new Label(() => "lines", "title", "right").setFill(true),
-			new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
-		], 8).setAlign("start").setFill(true);
-
-		const CENTER_COLUMN = new VBox([
-			new BoardWidget(
-				() => this.game.getGrid(),
-				() => this.game.getDimensions(),
-				() => this.game.getVisibleHeight(),
-				() => this.game.getCurrentPiece(),
-				() => this.game.getCurrentPieceLowestY(),
-			),
-		], 8).setAlign("start").setFill(true);
-
-		const RIGHT_COLUMN = new VBox([
-			new Label(() => "queue", "title", "right").setFill(true),
-			new SizedBox(0, 8),
-			new PieceQueueWidget(() => this.game.getQueue(5)),
-		], 8).setAlign("start").setFill(true);
-
-		return new Center(new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16));
+		return new StandardGame(
+			() => this.game.getGrid(),
+			() => this.game.getDimensions(),
+			() => this.game.getVisibleHeight(),
+			() => this.game.getCurrentPiece(),
+			() => this.game.getCurrentPieceLowestY(),
+			() => this.game.getHoldType(),
+			() => this.game.getQueue(5),
+			[
+				new Label(() => "blitz", "title", "right").setFill(true),
+				new SizedBox(0, 16),
+				new Label(() => "time", "title", "right").setFill(true),
+				new Label(() => this.timer.format(), "data", "right").setFill(true),
+				new SizedBox(0, 16),
+				new Label(() => "lines", "title", "right").setFill(true),
+				new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
+			]
+		);
 	}
 
 	private createUiLayer(): Widget {

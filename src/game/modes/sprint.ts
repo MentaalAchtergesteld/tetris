@@ -4,14 +4,12 @@ import { Widget } from "../../ui/widget";
 import { Game, DEFAULT_GAME_SETTINGS } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
-import { VBox, HBox, Center, Spacer, SizedBox, Overlay } from "../../ui/widgets/layout";
-import { HoldContainerWidget } from "../../ui/widgets/hold_container";
-import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
-import { BoardWidget } from "../../ui/widgets/board";
+import { VBox, Center, SizedBox, Overlay } from "../../ui/widgets/layout";
 import { Label } from "../../ui/widgets/label";
 import { Conditional } from "../../ui/widgets/logic";
 import { ColorBlock } from "../../ui/widgets/color_block";
 import { Countdown } from "../../ui/widgets/countdown";
+import { StandardGame } from "../../ui/widgets/standard_game";
 
 enum SprintState {
 	Ready,
@@ -41,37 +39,24 @@ export class SprintMode implements GameMode {
 	}
 	
 	private createGameLayer(): Widget {
-		const LEFT_COLUMN = new VBox([
-			new Label(() => "hold", "title", "left").setFill(true),
-			new SizedBox(0, 8),
-			new HoldContainerWidget(() => this.game.getHoldType()),
-			new Spacer(),
-			new Label(() => "40 lines", "title", "right").setFill(true),
-			new SizedBox(0, 16),
-			new Label(() => "time", "title", "right").setFill(true),
-			new Label(() => this.timer.format(), "data", "right").setFill(true),
-			new SizedBox(0, 16),
-			new Label(() => "lines", "title", "right").setFill(true),
-			new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
-		], 8).setAlign("start").setFill(true);
-
-		const CENTER_COLUMN = new VBox([
-			new BoardWidget(
-				() => this.game.getGrid(),
-				() => this.game.getDimensions(),
-				() => this.game.getVisibleHeight(),
-				() => this.game.getCurrentPiece(),
-				() => this.game.getCurrentPieceLowestY(),
-			),
-		], 8).setAlign("start").setFill(true);
-
-		const RIGHT_COLUMN = new VBox([
-			new Label(() => "queue", "title", "right").setFill(true),
-			new SizedBox(0, 8),
-			new PieceQueueWidget(() => this.game.getQueue(5)),
-		], 8).setAlign("start").setFill(true);
-
-		return new Center(new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16));
+		return new StandardGame(
+			() => this.game.getGrid(),
+			() => this.game.getDimensions(),
+			() => this.game.getVisibleHeight(),
+			() => this.game.getCurrentPiece(),
+			() => this.game.getCurrentPieceLowestY(),
+			() => this.game.getHoldType(),
+			() => this.game.getQueue(5),
+			[
+				new Label(() => "40 lines", "title", "right").setFill(true),
+				new SizedBox(0, 16),
+				new Label(() => "time", "title", "right").setFill(true),
+				new Label(() => this.timer.format(), "data", "right").setFill(true),
+				new SizedBox(0, 16),
+				new Label(() => "lines", "title", "right").setFill(true),
+				new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
+			]
+		);
 	}
 
 	private createUiLayer(): Widget {
