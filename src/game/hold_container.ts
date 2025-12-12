@@ -1,10 +1,10 @@
-import { Piece } from "../piece";
+import { TetrominoType } from "./piece";
 
 export class HoldContainer {
-	public piece: Piece | null = null;
+	public piece: TetrominoType | null = null;
 	public isLocked: boolean = false;
 
-	public swap(currentPiece: Piece): Piece | null {
+	public swap(currentPiece: TetrominoType): TetrominoType | null {
 		if (this.isLocked) return null;
 
 		const comingOut = this.piece;

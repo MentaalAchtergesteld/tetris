@@ -1,6 +1,6 @@
-import { drawPieceCentered, MAX_PIECE_BOUNDS, TETROMINOS, TetrominoType } from "../../piece";
+import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "../../game/piece";
 import { GameTheme } from "../../theme";
-import { drawLabel, getTextHeight } from "../../visuals";
+import { drawPieceCentered } from "../util";
 import { Size, Widget } from "../widget";
 
 export class PieceQueueWidget extends Widget {
@@ -23,14 +23,14 @@ export class PieceQueueWidget extends Widget {
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
 		const { width, height } = this.getMinSize(theme);
 
-		const labelText = "queue";
-		const textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
+		// const labelText = "queue";
+		// const textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
+		//
+		// y += textHeight;
+		//
+		// drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.TextPrimary, ctx);
 
-		y += textHeight;
-
-		drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.TextPrimary, ctx);
-
-		y += 8;
+		// y += 8;
 
 		ctx.fillStyle = theme.Colors.BoardBackground;
 		ctx.fillRect(x, y, width, height);
@@ -48,7 +48,7 @@ export class PieceQueueWidget extends Widget {
 		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*theme.Layout.BlockSize;
 		for (let i = 0; i < pieces.length; i++) {
 			drawPieceCentered(
-				TETROMINOS[pieces[i]],
+				SHAPES[pieces[i]],
 				x, y+entryHeight*i,
 				width, entryHeight,
 				theme.Layout.BlockSize,

@@ -1,4 +1,13 @@
-import { createPieceBag, TetrominoType } from "../piece";
+import { TetrominoType } from "./piece";
+
+function createPieceBag(): TetrominoType[] {
+	const bag: TetrominoType[] = ["I", "J", "L", "O", "S", "T", "Z"];
+	for (let i = bag.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[bag[i], bag[j]] = [bag[j], bag[i]];
+	}
+	return bag;
+}
 
 export class PieceQueue {
 	private queue: TetrominoType[];

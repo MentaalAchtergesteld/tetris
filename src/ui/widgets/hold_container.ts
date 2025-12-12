@@ -1,12 +1,12 @@
-import { drawPieceCentered, MAX_PIECE_BOUNDS, Piece } from "../../piece";
+import {  MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "../../game/piece";
 import { GameTheme } from "../../theme";
-import { drawLabel } from "../../visuals";
-import { measureText, Size, Widget } from "../widget";
+import { Size, Widget } from "../widget";
+import { drawPieceCentered } from "../util";
 
 export class HoldContainerWidget extends Widget {
-	private holdPieceProvider: () => Piece | null;
+	private holdPieceProvider: () => TetrominoType | null;
 
-	constructor(holdPieceProvider: () => Piece | null) {
+	constructor(holdPieceProvider: () => TetrominoType | null) {
 		super();
 		this.holdPieceProvider = holdPieceProvider;
 	}
@@ -20,15 +20,6 @@ export class HoldContainerWidget extends Widget {
 
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
 		const { width, height } = this.getMinSize(theme);
-
-		const labelText = "hold";
-		const textSize = measureText(labelText, theme.Typography.TitleFontFamily, theme.Typography.TitleFontSize);
-
-		y += textSize.height;
-
-		drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.BoardBorder, ctx);
-
-		y += 8;
 
 		ctx.fillStyle = theme.Colors.BoardBackground;
 		ctx.fillRect(x, y, width, height);
@@ -45,7 +36,7 @@ export class HoldContainerWidget extends Widget {
 		if (!piece) return;
 
 		drawPieceCentered(
-			piece.shape,
+			SHAPES[piece],
 			x, y,
 			width, height,
 			theme.Layout.BlockSize,

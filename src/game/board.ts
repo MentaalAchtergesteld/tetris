@@ -1,14 +1,16 @@
-import { Piece } from "../piece";
+import { Piece } from "./piece";
 
 export class Board {
 	width: number;
 	height: number;
+	visibleHeight: number;
 	grid: number[][];
 
 	constructor(width: number = 10, height: number = 20) {
 		this.width = width;
-		this.height = height;
+		this.visibleHeight = height;
 
+		this.height = this.visibleHeight * 2;
 		this.initializeGrid();
 	}
 
@@ -22,10 +24,8 @@ export class Board {
 
 	isEmpty(x: number, y: number): boolean {
 		return (
-			x >= 0 &&
-			x < this.width &&
-			y >= 0 &&
-			y < this.height &&
+			x >= 0 && x < this.width &&
+			y >= 0 && y < this.height &&
 			this.grid[y][x] === 0
 		)
 	}
@@ -38,6 +38,19 @@ export class Board {
 			}
 		}
 		return true;
+	}
+
+	isFullyInBuffer(piece: Piece): boolean {
+		let lowestYInUse = this.height;
+		for (let dy = 0; dy < piece.shape.length; dy++) {
+			for (let dx = 0; dx < piece.shape[dy].length; dx++) {
+				if (piece.shape[dy][dx] == 0) continue;
+				lowestYInUse = Math.min(lowestYInUse, piece.y + dy);
+			}
+		}
+		const bufferHeight = this.height - this.visibleHeight;
+
+		return lowestYInUse <= bufferHeight - 2;
 	}
 
 	lockPiece(piece: Piece) {

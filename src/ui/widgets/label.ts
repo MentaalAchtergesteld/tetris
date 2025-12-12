@@ -1,6 +1,7 @@
+import "../../extensions/canvas";
 import { GameTheme } from "../../theme";
-import { measureText, Size, Widget } from "../widget";
-import {} from "../../extensions/canvas";
+import { Size, Widget } from "../widget";
+import { measureText } from "../util";
 
 export type LabelStyle = "title" | "data";
 
