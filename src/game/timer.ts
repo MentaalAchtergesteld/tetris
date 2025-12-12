@@ -1,14 +1,24 @@
 export class GameTimer {
 	public time: number = 0;
 	private running: boolean = false;
+	private direction: "up" | "down";
+	private startValue = 0;
+
+	constructor(direction: "up" | "down" = "up", startValue: number = 0) {
+		this.direction = direction;
+		this.startValue = startValue;
+		this.reset();
+	}
 
 	start() { this.running = true }
 	stop() { this.running = false }
-	reset() { this.time = 0; this.running = false; }
+	reset() { this.time = this.startValue; this.running = false; }
 
 	update(dt: number) {
 		if (!this.running) return;
-		this.time += dt;
+
+		if (this.direction == "up") this.time += dt;
+		else this.time -= dt;
 	}
 
 	format(): string {

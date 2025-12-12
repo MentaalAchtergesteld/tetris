@@ -13,7 +13,7 @@ export interface GameSettings {
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
-	gravity: 1,
+	gravity: 2,
 	boardWidth: 10,
 	boardHeight: 20,
 	lockDelay: .5,
@@ -49,6 +49,7 @@ export class Game {
 
 	private gravityTimer: number = 0;
 	public softDropFactor: number = 0;
+	public gravityMultiplier: number = 1;
 
 	public isGameOver: boolean = false;
 
@@ -183,6 +184,7 @@ export class Game {
 
     this.gravityTimer = 0;
 	  this.softDropFactor = 1;
+		this.gravityMultiplier = 1;
 
 	  this.isGameOver = false;
 	}
@@ -195,7 +197,7 @@ export class Game {
 	public updateGravity(dt: number) {
 		if (!this.currentPiece || this.isGameOver) return;
 
-		let speed = this.settings.gravity;
+		let speed = this.settings.gravity * this.gravityMultiplier;
 
 		if (this.softDropFactor > 0) {
 			const factor = Math.max(1, this.softDropFactor);

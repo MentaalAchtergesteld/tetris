@@ -6,7 +6,8 @@ import { QuickHUD, HUDPosition } from "./engine/quickhud";
 import { DEFAULT_THEME } from "./theme";
 import { ScreenRecoil, ScreenShake } from "./engine/vfx";
 import { SprintMode } from "./game/modes/sprint";
-import { GameContext } from "./game/modes";
+import { GameContext, GameMode } from "./game/modes";
+import { BlitzMode } from "./game/modes/blitz";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -49,6 +50,8 @@ const gameContext: GameContext = {
 	recoilSettings
 }
 
+let gamemode: GameMode = new SprintMode();
+
 new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 	.addFolder("Game")
 	.addRange("Gravity", 0, 10, DEFAULT_GAME_SETTINGS.gravity, 0.1, (val) => DEFAULT_GAME_SETTINGS.gravity = val)
@@ -74,10 +77,11 @@ new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addButton("3 Line Cleared", () => effectsManager.playLinesCleared(3))
 	.addButton("4 Line Cleared", () => effectsManager.playLinesCleared(4))
 	.addButton("Tetris Cleared", () => effectsManager.playTetrisCleared())
-	.addButton("Hard Drop",      () => effectsManager.playHardDrop())
+	.addButton("Lock",      () => effectsManager.playLock())
 	.addButton("Game Over",      () => effectsManager.playGameOver())
-
-const gamemode = new SprintMode();
+	.parent().addFolder("Game Modes")
+	.addButton("40 Lines", () => { gamemode = new SprintMode(); gamemode.onEnter(gameContext) })
+	.addButton("Blitz",    () => { gamemode = new BlitzMode();  gamemode.onEnter(gameContext) })
 
 let lastTime = 0;
 function loop(time: number) {

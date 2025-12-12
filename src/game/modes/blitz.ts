@@ -1,50 +1,50 @@
-import { LocalController, DEFAULT_CONTROLLER_SETTINGS } from "../../engine/input";
+import { DEFAULT_CONTROLLER_SETTINGS, LocalController } from "../../engine/input";
 import { GameTheme } from "../../theme";
 import { Widget } from "../../ui/widget";
-import { Game, DEFAULT_GAME_SETTINGS } from "../game";
+import { BoardWidget } from "../../ui/widgets/board";
+import { ColorBlock } from "../../ui/widgets/color_block";
+import { HoldContainerWidget } from "../../ui/widgets/hold_container";
+import { Label } from "../../ui/widgets/label";
+import { Center, HBox, Overlay, SizedBox, Spacer, VBox } from "../../ui/widgets/layout";
+import { Conditional } from "../../ui/widgets/logic";
+import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
+import { DEFAULT_GAME_SETTINGS, Game } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
-import { VBox, HBox, Center, Spacer, SizedBox, Overlay } from "../../ui/widgets/layout";
-import { HoldContainerWidget } from "../../ui/widgets/hold_container";
-import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
-import { BoardWidget } from "../../ui/widgets/board";
-import { Label } from "../../ui/widgets/label";
-import { Conditional } from "../../ui/widgets/logic";
-import { ColorBlock } from "../../ui/widgets/color_block";
 
-enum SprintState {
+enum BlitzState {
 	Ready,
 	Running,
 	Finished,
 	Gameover,
 }
 
-export class SprintMode implements GameMode {
+export class BlitzMode implements GameMode {
 	private game: Game;
 	private controller: LocalController;
 	private context: GameContext | null = null;
-
+	
 	private layout: Widget;
 
-	private state: SprintState = SprintState.Ready;
+	private state: BlitzState;
 	private timer: GameTimer;
+	private countdown = 0;
 	private linesCleared = 0;
-	private countdown = 3;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
 		this.controller = new LocalController(this.game, DEFAULT_CONTROLLER_SETTINGS);
 		this.layout = this.createLayout();
-		this.timer = new GameTimer();
+		this.timer = new GameTimer("down", 120);
 	}
-	
+
 	private createGameLayer(): Widget {
 		const LEFT_COLUMN = new VBox([
 			new Label(() => "hold", "title", "left").setFill(true),
 			new SizedBox(0, 8),
 			new HoldContainerWidget(() => this.game.getHoldType()),
 			new Spacer(),
-			new Label(() => "40 lines", "title", "right").setFill(true),
+			new Label(() => "blitz", "title", "right").setFill(true),
 			new SizedBox(0, 16),
 			new Label(() => "time", "title", "right").setFill(true),
 			new Label(() => this.timer.format(), "data", "right").setFill(true),
@@ -74,7 +74,7 @@ export class SprintMode implements GameMode {
 
 	private createUiLayer(): Widget {
 		const countdownLayer = new Conditional(
-			() => this.state == SprintState.Ready,
+			() => this.state == BlitzState.Ready,
 			new Center(new Label(() => {
 				const t = Math.ceil(this.countdown);
 				return t > 0 ? t.toString() : "GO!";
@@ -82,13 +82,13 @@ export class SprintMode implements GameMode {
 		);
 
 		const resultLayer = new Conditional(
-			() => this.state == SprintState.Gameover || this.state == SprintState.Finished,
+			() => this.state == BlitzState.Gameover || this.state == BlitzState.Finished,
 			new Overlay([
 				new ColorBlock("rgba(0, 0, 0, 0.75)"),
 				new Center(new VBox([
-					new Label(() => this.state == SprintState.Finished ? "victory" : "game over", "title", "center"),
+					new Label(() => this.state == BlitzState.Finished ? "victory" : "game over", "title", "center"),
 					new SizedBox(0, 16),
-					new Label(() => `final time: ${this.timer.format()}`, "data", "center"),
+					new Label(() => `final score: ${this.linesCleared}`, "data", "center"),
 					new SizedBox(0, 16),
 					new Label(() => "press R to restart", "data", "center"),
 				])),
@@ -100,9 +100,8 @@ export class SprintMode implements GameMode {
 
 	private createLayout(): Widget { return new Overlay([this.createGameLayer(), this.createUiLayer()]) }
 
-
 	private victory() {
-		this.state = SprintState.Finished;
+		this.state = BlitzState.Finished;
 		this.timer.stop();
 	}
 
@@ -119,7 +118,10 @@ export class SprintMode implements GameMode {
 				this.context!.effects.playTetrisCleared();
 			}
 
-			if (this.linesCleared >= 40) this.victory();
+			const currentLevel = Math.floor(this.linesCleared / 10) + 1;
+
+			this.game.gravityMultiplier = Math.max(1, currentLevel*0.8);
+			if (this.timer.time <= 0) this.victory();
 		});
 
 		this.game.events.on("lock", () => {
@@ -129,7 +131,7 @@ export class SprintMode implements GameMode {
 
 		this.game.events.on("gameOver", () => {
 			this.context!.effects.playGameOver();
-			this.state = SprintState.Gameover;
+			this.state = BlitzState.Gameover;
 		});
 
 		this.game.events.on("start", () => {
@@ -143,9 +145,8 @@ export class SprintMode implements GameMode {
 		this.game.reset();
 
 		this.linesCleared = 0;
-		this.timer.reset();
 		this.countdown = 3;
-		this.state = SprintState.Ready;
+		this.state = BlitzState.Ready;
 
 		this.game.events.clear();
 		this.bindEvents();
@@ -164,17 +165,17 @@ export class SprintMode implements GameMode {
 
 	update(dt: number): void {
 		if (this.controller.input.isDown("KeyR")) this.reset();
-		if (this.state == SprintState.Finished || this.state == SprintState.Gameover) return;
+		if (this.state == BlitzState.Finished || this.state == BlitzState.Gameover) return;
 
 		switch (this.state) {
-			case SprintState.Ready:
+			case BlitzState.Ready:
 				this.countdown -= dt;
 				if (this.countdown <= 0) {
-					this.state = SprintState.Running;
+					this.state = BlitzState.Running;
 					this.context?.effects.playTetrisCleared();
 				}
 				break;
-			case SprintState.Running:
+			case BlitzState.Running:
 				this.timer.update(dt);
 				this.controller.update(dt);
 				this.game.update(dt);
