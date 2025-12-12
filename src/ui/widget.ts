@@ -27,16 +27,3 @@ export abstract class Widget {
 	abstract getMinSize(theme: GameTheme): Size;
 	abstract draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void;
 }
-
-
-const offscreenCanvas = document.createElement("canvas");
-const offscreenCtx = offscreenCanvas.getContext("2d")!;
-
-export function measureText(text: string, font: string, fontSize: number): Size {
-	offscreenCtx.font = `${fontSize}px ${font}`;
-	const bounds = offscreenCtx.measureText(text);
-	return {
-		width: bounds.width,
-		height: bounds.actualBoundingBoxAscent + bounds.actualBoundingBoxDescent,
-	}
-}

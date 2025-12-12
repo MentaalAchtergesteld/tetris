@@ -1,5 +1,16 @@
-import { Game } from "./game/game";
-import { ControllerSettings, DEFAULT_CONTROLLER_SETTINGS } from "./settings";
+import { Game } from "../game/game";
+
+export interface ControllerSettings {
+	das: number;
+	arr: number;
+	sdf: number;
+}
+
+export const DEFAULT_CONTROLLER_SETTINGS: ControllerSettings = {
+	das: 0.150,
+	arr: 0.03,
+	sdf: 10000,
+}
 
 class InputState {
 	keys: Record<string, boolean> = {};
@@ -34,7 +45,7 @@ export class LocalController implements Controller {
 	}
 
 	update(dt: number): void {
-		this.game.gravityMult = this.input.isDown("ArrowDown") ? this.settings.sdf : 1;
+		this.game.softDropFactor = this.input.isDown("ArrowDown") ? this.settings.sdf : 1;
 		this.handleMovement(dt);
 		this.handleActions();
 	}
@@ -51,7 +62,7 @@ export class LocalController implements Controller {
 			this.dasTimer = 0;
 			this.arrTimer = 0;
 			this.lastDir = dir;
-			if (dir) this.game.movePiece(dir == "ArrowLeft" ? -1 : 1);
+			if (dir) this.game.moveCurrentPiece(dir == "ArrowLeft" ? -1 : 1, 0);
 			return;
 		}
 
@@ -63,10 +74,10 @@ export class LocalController implements Controller {
 		const moveVal = dir == "ArrowLeft" ? -1 : 1;
 		
 		if (this.settings.arr == 0) {
-			while (this.game.movePiece(moveVal));
+			while (this.game.moveCurrentPiece(moveVal, 0));
 		} else {
 			while (this.arrTimer >= this.settings.arr) {
-				this.game.movePiece(moveVal);
+				this.game.moveCurrentPiece(moveVal, 0);
 				this.arrTimer -= this.settings.arr;
 			};
 		}
@@ -75,7 +86,7 @@ export class LocalController implements Controller {
 	private handleActions() {
 		if (this.input.isDown("ArrowUp")) {
 			if (!this.rotatePressed) {
-				this.game.rotatePiece(1);
+				this.game.rotateCurrentPiece(1);
 				this.rotatePressed = true;
 			}
 		} else this.rotatePressed = false;

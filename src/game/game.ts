@@ -1,12 +1,11 @@
-import { EventEmitter } from "../event_emitter";
-import { createPiece, resetPiece, Piece, getPieceBounds, getRotatedPiece } from "../piece";
-import { Board } from "./board";
-import { GameTimer } from "./game_timer";
-import { HoldContainer } from "./hold_container";
-import { PieceQueue } from "./piece_queue";
+import { Board } from "../game/board";
+import { getRotatedPiece, getSRSOffsets, Piece } from "../game/piece";
+import { HoldContainer } from "../game/hold_container";
+import { PieceQueue } from "../game/piece_queue";
+import { EventEmitter } from "../engine/events";
+import { TetrominoType } from "./piece";
 
 export interface GameSettings {
-	blockSize: number;
 	gravity: number;
 	boardWidth: number;
 	boardHeight: number;
@@ -14,7 +13,6 @@ export interface GameSettings {
 }
 
 export const DEFAULT_GAME_SETTINGS: GameSettings = {
-	blockSize: 32,
 	gravity: 1,
 	boardWidth: 10,
 	boardHeight: 20,
@@ -26,76 +24,65 @@ export interface GameEvents {
 	"gameOver": void,
 
 	"move": number,
+	"drop": number,
 	"rotate": number,
 
 	"hardDrop": void,
-	"softDrop": void,
 
 	"lock": void,
 	"lineClear": number,
 
 	"hold": void,
+	"spawn": void,
 }
 
-export class Game {
+export class Game {
+	public currentPiece: Piece | null = null;
+
 	public settings: GameSettings;
+
+	private board: Board;
+	private hold: HoldContainer;
+	private queue: PieceQueue;
+
+	private lockTimer: number = 0;
+
+	private gravityTimer: number = 0;
+	public softDropFactor: number = 0;
+
+	public isGameOver: boolean = false;
 
 	public events: EventEmitter<GameEvents>;
 
-	public board: Board;
-	public queue: PieceQueue;
-	public hold: HoldContainer;
+	constructor(settings: GameSettings) {
+		this.settings = settings
 
-	public currentPiece: Piece | null = null;
-
-	private lockTimer: number = 0;
-	private gravityTimer: number = 0;
-	public gravityMult: number = 1;
-
-	public gameOver: boolean = false;
-
-	constructor(settings: GameSettings = DEFAULT_GAME_SETTINGS) {
-		this.settings = settings;
-
-		this.events = new EventEmitter<GameEvents>();
-
-		this.board = new Board(settings.boardWidth, settings.boardHeight);
-		this.queue = new PieceQueue();
+		this.board = new Board(this.settings.boardWidth, this.settings.boardHeight);
 		this.hold = new HoldContainer();
-
-		this.reset();
+		this.queue = new PieceQueue();
+		this.events = new EventEmitter<GameEvents>();
 	}
 
-	reset() {
-		this.queue.reset();
-		this.hold.reset();
-		this.board.reset();
-
-		this.lockTimer = 0;
-		this.gravityTimer = 0;
-		this.gravityMult = 1;
-		this.gameOver = false;
-
-		this.currentPiece = null;
+	public getGrid(): number[][] { return this.board.grid }
+	public getDimensions(): { width: number, height: number } {
+		return { width: this.board.width, height: this.board.height }
 	}
+	public getQueue(count: number): TetrominoType[] { return this.queue.peek(count) }
+	public getHoldType(): TetrominoType | null { return this.hold.piece }
+	public getCurrentPiece(): Piece | null { return this.currentPiece }
 
-	start() {
-		this.currentPiece = createPiece(this.queue.getNext());
-		this.resetCurrentPiece();
-	}
-
-	private resetCurrentPiece() {
-		if (!this.currentPiece) return;
-		const bounding = getPieceBounds(this.currentPiece.shape);
-		this.currentPiece = resetPiece(this.currentPiece);
-		this.currentPiece.x = Math.floor((this.settings.boardWidth-bounding.width)/2);
+	private spawnNewCurrentPiece(type: TetrominoType) {
+		this.currentPiece = Piece.spawn(type);
+		this.currentPiece.x = Math.floor((this.board.width - this.currentPiece.shape.length)/2);
 		this.currentPiece.y = 0;
+		this.events.emit("spawn", undefined);
 	}
 
 	private endTurn() {
 		if (!this.currentPiece) return;
 
 		this.board.lockPiece(this.currentPiece);
+		this.events.emit("lock", undefined);
 		let lines = this.board.checkLineClear();
 		if (lines > 0) this.events.emit("lineClear", lines);
 
@@ -103,69 +90,49 @@ export class Game {
 		this.lockTimer = 0;
 		this.gravityTimer = 0;
 
-		this.currentPiece = createPiece(this.queue.getNext());
-		this.resetCurrentPiece();
+		this.spawnNewCurrentPiece(this.queue.getNext())
 	}
 
-	private canMove(dx: number, dy: number): boolean {
+	private canMoveCurrentPiece(dx: number, dy: number): boolean {
 		if (!this.currentPiece) return false;
 		return this.board.isValidPosition(this.currentPiece.shape, this.currentPiece.x+dx, this.currentPiece.y+dy);
 	}
 
-	public getLowestPosition(): number {
+	getCurrentPieceLowestY(): number {
 		if (!this.currentPiece) return 0;
-		let testedY = 0;
-		while (this.canMove(0, testedY)) testedY++;
-		return testedY + this.currentPiece.y - 1;
+		let yOffset = 0;
+
+		while (this.canMoveCurrentPiece(0, yOffset+1)) yOffset+=1;
+		return this.currentPiece.y + yOffset;
 	}
 
-	public swapHold() {
-		if (this.hold.isLocked || !this.currentPiece || this.gameOver) return;
+	public moveCurrentPiece(dx: number, dy: number): boolean {
+		if (!this.currentPiece || this.isGameOver) return false;
+		if (!this.canMoveCurrentPiece(dx, dy)) return false;
 
-		this.currentPiece = this.hold.swap(resetPiece(this.currentPiece));
-
-		if (!this.currentPiece) this.currentPiece = createPiece(this.queue.getNext());
-		this.resetCurrentPiece();
-
-		this.events.emit("hold", undefined);
-	}
-
-	public hardDrop() {
-		if (!this.currentPiece || this.gameOver) return;
-		const lowestY = this.getLowestPosition();
-		this.currentPiece.y = lowestY;
-		this.events.emit("hardDrop", undefined);
-		this.events.emit("lock", undefined);
-		this.endTurn();
-	}
-
-	public movePiece(dir: -1 | 1): boolean {
-		if (!this.currentPiece || this.gameOver) return false;
-		if (!this.canMove(dir, 0)) return false;
-		this.currentPiece.x += dir;
+		this.currentPiece.x += dx;
+		this.currentPiece.y += dy;
 		this.lockTimer = 0;
 
-		this.events.emit("move", dir);
+		if (dx != 0) this.events.emit("move", dx);
+		if (dy != 0) this.events.emit("drop", dy);
 		return true;
 	}
 
-	public rotatePiece(dir: -1 | 1): boolean {
-		if (!this.currentPiece || this.gameOver) return false;
+	public rotateCurrentPiece(dir: -1 | 1): boolean {
+		if (!this.currentPiece || this.isGameOver) return false;
 
-		const candidate = getRotatedPiece(this.currentPiece, dir);
+		const candidate	= getRotatedPiece(this.currentPiece, dir);
+		const offsets = getSRSOffsets(this.currentPiece, candidate.rotation);
 
-		const kicks = [
-			{x:0,  y:0},
-			{x:1,  y:0},
-			{x:-1, y:0},
-			{x:0,  y:-1},
-			{x:1,  y:-1},
-			{x:-1, y:-1},
-		];
+		for (const offset of offsets) {
+			if (!this.board.isValidPosition(
+				candidate.shape,
+				candidate.x + offset.x,
+				candidate.y + offset.y
+			)) continue;
 
-		for (const offset of kicks) {
-			if (!this.board.isValidPosition(candidate.shape, candidate.x + offset.x, candidate.y + offset.y)) continue;
-			this.currentPiece.shape = candidate.shape;
+			this.currentPiece = candidate;
 			this.currentPiece.x += offset.x;
 			this.currentPiece.y += offset.y;
 			this.lockTimer = 0;
@@ -175,32 +142,77 @@ export class Game {
 		return false;
 	}
 
+	public hardDrop() {
+		if (!this.currentPiece || this.isGameOver) return false;
+		const lowestY = this.getCurrentPieceLowestY();
+		this.currentPiece.y = lowestY;
+		this.events.emit("hardDrop", undefined);
+		this.endTurn();
+	}
+
+	public swapHold() {
+		if (this.hold.isLocked || !this.currentPiece || this.isGameOver) return;
+
+		const typeFromHold = this.hold.swap(this.currentPiece.type);
+
+		if (typeFromHold) this.spawnNewCurrentPiece(typeFromHold);
+		else this.spawnNewCurrentPiece(this.queue.getNext());
+
+		this.lockTimer = 0;
+		this.gravityTimer = 0;
+
+		this.events.emit("hold", undefined);
+	}
+
+	public reset() {
+		this.currentPiece = null;
+
+		this.board.reset();
+		this.queue.reset();
+		this.hold.reset();
+
+
+		this.lockTimer = 0;
+
+    this.gravityTimer = 0;
+	  this.softDropFactor = 1;
+
+	  this.isGameOver = false;
+	}
+
+	public start() {
+		this.spawnNewCurrentPiece(this.queue.getNext());
+		this.events.emit("start", undefined);
+	}
+
 	public updateGravity(dt: number) {
-		if (!this.currentPiece) return;
-		const interval = this.settings.gravity / this.gravityMult;
-		this.gravityTimer += dt;
+		if (!this.currentPiece || this.isGameOver) return;
 
-		while (this.gravityTimer >= interval) {
-			if (!this.canMove(0, 1)) { this.gravityTimer = 0; break; }
-			if (this.gravityMult != 1) this.events.emit("softDrop", undefined);
-			this.currentPiece.y++;
-			this.lockTimer = 0;
+		let speed = this.settings.gravity;
 
-			if (interval == 0) this.gravityTimer = 0;
-			else this.gravityTimer -= interval;
+		if (this.softDropFactor > 0) {
+			const factor = Math.max(1, this.softDropFactor);
+			speed *= factor;
+		}
+
+		this.gravityTimer += speed * dt;
+
+		while (this.gravityTimer >= 1.0) {
+			this.gravityTimer -= 1.0;
+			const moved = this.moveCurrentPiece(0, 1);
+			if (!moved) { this.gravityTimer = 0; break; }
 		}
 	}
 
 	public updateLock(dt: number) {
-		if (this.canMove(0, 1)) { this.lockTimer = 0; return; }
+		if (this.canMoveCurrentPiece(0, 1)) { this.lockTimer = 0; return; }
 		this.lockTimer += dt;
 		if (this.lockTimer < this.settings.lockDelay) return;
-		this.events.emit("lock", undefined);
 		this.endTurn();
 	}
 
-	public update(dt: number) {
-		if (!this.currentPiece || this.gameOver) return;
+	public update(dt: number) {
+		if (!this.currentPiece || this.isGameOver) return;
 
 		this.updateGravity(dt);
 		this.updateLock(dt);

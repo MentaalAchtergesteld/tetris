@@ -1,12 +1,12 @@
 import "./extensions/canvas";
-
-import { AudioManager, EffectsManager } from "./audio";
-import { Game } from "./game/game";
-import { LocalController } from "./input";
-import { QuickHUD, HUDPosition } from "./quickhud";
+import { AudioManager, EffectsManager } from "./engine/audio";
+import { DEFAULT_GAME_SETTINGS } from "./game/game";
+import { DEFAULT_CONTROLLER_SETTINGS } from "./engine/input";
+import { QuickHUD, HUDPosition } from "./engine/quickhud";
 import { DEFAULT_THEME } from "./theme";
-import { ScreenRecoil, ScreenRecoilSettings, ScreenShake } from "./visuals";
-import { SprintMode } from "./game/modes";
+import { ScreenRecoil, ScreenShake } from "./engine/vfx";
+import { SprintMode } from "./game/modes/sprint";
+import { GameContext } from "./game/modes";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -28,48 +28,44 @@ setCanvasToWindowSize();
 
 document.body.appendChild(canvas);
 
-const gamemode = new SprintMode();
-
-const game = new Game();
-game.reset();
-
-const controller = new LocalController(game);
-
-gamemode.game = game;
-gamemode.controller = controller;
-
 const screenShake = new ScreenShake();
-let shakeIntensityMultiplier = 3;
 
-const recoilSettings: ScreenRecoilSettings = {
-	tension: 150,
-	damping: 30,
-	mass: 1
-};
+const recoilSettings = {
+		tension: 150,
+		damping: 30,
+		mass: 1,
+	}
 const screenRecoil = new ScreenRecoil(recoilSettings);
 
 const audioManager = new AudioManager();
 const effectsManager = new EffectsManager(audioManager);
 
+const gameContext: GameContext = {
+	effects: effectsManager,
+	audio: audioManager,
+	shake: screenShake,
+	shakeIntensityMultiplier: 3,
+	recoil: screenRecoil,
+	recoilSettings
+}
+
 new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 	.addFolder("Game")
-	.addRange("Gravity", 0.1, 10, game.settings.gravity, 0.1, (val) => game.settings.gravity = val)
-	.addRange("Lock Delay", 0.1, 2, game.settings.lockDelay, 0.1, (val) => game.settings.lockDelay= val)
+	.addRange("Gravity", 0, 10, DEFAULT_GAME_SETTINGS.gravity, 0.1, (val) => DEFAULT_GAME_SETTINGS.gravity = val)
+	.addRange("Lock Delay", 0.1, 2, DEFAULT_GAME_SETTINGS.lockDelay, 0.1, (val) => DEFAULT_GAME_SETTINGS.lockDelay= val)
 
 	.parent().addFolder("Handling")
-	.addRange("Delayed Auto Shift", 0.01, 1, controller.settings.das, 0.005, (val) => controller.settings.das = val)
-	.addRange("Auto Repeat Rate", 0.01, 1, controller.settings.arr, 0.001, (val) => controller.settings.arr= val)
-	.addRange("Soft Drop Factor", 1, 1000, controller.settings.sdf, 1, (val) => controller.settings.sdf= val)
+	.addRange("Delayed Auto Shift", 0.01, 1, DEFAULT_CONTROLLER_SETTINGS.das, 0.005, (val) => DEFAULT_CONTROLLER_SETTINGS.das = val)
+	.addRange("Auto Repeat Rate", 0.01, 1, DEFAULT_CONTROLLER_SETTINGS.arr, 0.001, (val) => DEFAULT_CONTROLLER_SETTINGS.arr= val)
+	.addRange("Soft Drop Factor", 1, 10000, DEFAULT_CONTROLLER_SETTINGS.sdf, 1, (val) => DEFAULT_CONTROLLER_SETTINGS.sdf= val)
 
 	.parent().addFolder("Visual")
-	.addRange("Shake Intensity Mult", 0, 20, shakeIntensityMultiplier, 0.5, (val) => shakeIntensityMultiplier = val)
+	.addRange("Shake Intensity Mult", 0, 20, gameContext.shakeIntensityMultiplier, 0.5, (val) => gameContext.shakeIntensityMultiplier = val)
 	.addRange("Shake Decay", 1, 100, screenShake.shakeDecay, 1, (val) => screenShake.shakeDecay = val)
 
 	.addRange("Recoil Tension", 1, 500, recoilSettings.tension, 1, (val) => recoilSettings.tension = val)
 	.addRange("Recoil Damping", 1, 500, recoilSettings.damping, 1, (val) => recoilSettings.damping = val)
 	.addRange("Recoil Mass", 1, 100, recoilSettings.mass, 1, (val) => recoilSettings.mass = val)
-
-const stats = new QuickHUD("Statistics", HUDPosition.TopLeft).setDraggable(true)
 
 new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addFolder("Sound")
@@ -81,34 +77,13 @@ new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addButton("Hard Drop",      () => effectsManager.playHardDrop())
 	.addButton("Game Over",      () => effectsManager.playGameOver())
 
-const setRowsClearedLabel = stats.addLabeledValue("Rows Cleared", 0);
-
-let totalClearedRows = 0;
-game.events.on("lineClear", (count) => {
-	screenShake.trigger(shakeIntensityMultiplier * count);
-	totalClearedRows += count;
-	setRowsClearedLabel(totalClearedRows);
-
-	if (count < 4) {
-		effectsManager.playLinesCleared(count);
-	} else {
-		effectsManager.playTetrisCleared();
-	}
-});
-
-game.events.on("lock", () => {
-	screenRecoil.trigger(100);
-})
-
-game.events.on("hardDrop", () => effectsManager.playHardDrop());
-game.events.on("gameOver", () => effectsManager.playGameOver());
+const gamemode = new SprintMode();
 
 let lastTime = 0;
 function loop(time: number) {
 	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
-	gamemode.update(dt);
 	ctx.fillStyle = DEFAULT_THEME.Colors.Background;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -117,7 +92,8 @@ function loop(time: number) {
 	screenRecoil.update(ctx, dt);
 	screenShake.update(ctx, dt);
 
-	gamemode.draw(ctx, 0, 0, canvas.width, canvas.height, DEFAULT_THEME);
+	gamemode.update(dt);
+	gamemode.draw(ctx, DEFAULT_THEME);
 	
 
 	ctx.restore();
@@ -127,7 +103,9 @@ function loop(time: number) {
 
 async function init() {
 	await document.fonts.ready;
-	game.start();
+	
+	gamemode.onEnter(gameContext);
+
 	requestAnimationFrame(loop);
 }
 

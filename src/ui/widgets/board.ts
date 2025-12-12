@@ -1,6 +1,8 @@
+import "../../extensions/canvas";
 import { Widget, Size } from "../widget";
-import { drawPieceShape, Piece, pieceIndexToColor } from "../../piece";
+import { Piece } from "../../game/piece";
 import { GameTheme } from "../../theme";
+import { drawPieceShape, pieceIndexToColor } from "../util";
 
 export class BoardWidget extends Widget {
 		private gridProvider: () => number[][];
@@ -72,13 +74,14 @@ export class BoardWidget extends Widget {
 		for (let row = 0; row < grid.length; row++) {
 			for (let col = 0; col < grid[row].length; col ++) {
 				const value = grid[row][col];
-				if (value == 0) continue;
-				
 				const px = x + (col * bs);
 				const py = y + (row * bs);
 
-				ctx.fillStyle = pieceIndexToColor(value, theme);
-				ctx.fillRect(px, py, bs, bs);
+				if (value != 0) {
+					ctx.fillStyle = pieceIndexToColor(value, theme);
+					ctx.fillRect(px, py, bs, bs);
+				}
+				ctx.strokeStyle = theme.Colors.PieceBorder;
 				ctx.strokeInnerRect(px, py, bs, bs);
 			}
 		}
