@@ -1,5 +1,3 @@
-import { GameTheme } from "../theme";
-
 export type TetrominoType = "I" | "J" | "L" | "O" | "S" | "T" | "Z";
 export enum Rotation { North, East, South, West };
 export const SHAPES: Record<TetrominoType, number[][]> = {
@@ -85,32 +83,17 @@ export function getRotatedPiece(piece: Piece, dir: -1 | 1): Piece {
 	return new Piece(piece.type, rotated, piece.x, piece.y, newRot);
 }
 
-// J, L, S, T, Z Offset Data
-// Matches the table in "How Guideline SRS Really Works"
 const SRS_OFFSETS_JLSTZ = [
-    // 0 - North
     [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}],
-    // 1 - East (R)
     [{x:0, y:0}, {x:1, y:0}, {x:1, y:-1}, {x:0, y:2}, {x:1, y:2}],
-    // 2 - South
     [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}],
-    // 3 - West (L)
     [{x:0, y:0}, {x:-1, y:0}, {x:-1, y:-1}, {x:0, y:2}, {x:-1, y:2}]
 ];
 
 const SRS_OFFSETS_I = [
-    // 0 - North
     [{x: 0, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}],
-    
-    // 1 - East
-    // TETR.IO SRS+: Start op (0,0) -> Geen wobble naar rechts!
     [{x: 0, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}, {x:-1, y:+1}, {x:+2, y:-2}],
-    
-    // 2 - South
-    [{x:-1, y:+1}, {x: 0, y:+1}, {x:-3, y:+1}, {x: 0, y: 0}, {x:-3, y: 0}],
-    
-    // 3 - West
-    // TETR.IO SRS+: Start op (0,0) -> Symmetrisch met East
+    [{x: 0, y: 0}, {x: 0, y:+1}, {x:-3, y:+1}, {x: 0, y: 0}, {x:-3, y: 0}],
     [{x: 0, y: 0}, {x:+1, y: 0}, {x:-2, y: 0}, {x:+1, y:+1}, {x:-2, y:-2}]
 ];
 

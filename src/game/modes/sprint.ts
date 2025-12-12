@@ -86,6 +86,7 @@ export class SprintMode implements GameMode {
 		this.game.events.on("start", () => {
 			this.timer.reset();
 			this.timer.start();
+			this.linesCleared = 0;
 		});
 
 		this.game.start();

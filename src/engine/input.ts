@@ -7,7 +7,7 @@ export interface ControllerSettings {
 }
 
 export const DEFAULT_CONTROLLER_SETTINGS: ControllerSettings = {
-	das: 0.150,
+	das: 0.13,
 	arr: 0.03,
 	sdf: 10000,
 }
