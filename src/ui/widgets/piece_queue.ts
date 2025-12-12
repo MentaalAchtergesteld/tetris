@@ -23,15 +23,6 @@ export class PieceQueueWidget extends Widget {
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
 		const { width, height } = this.getMinSize(theme);
 
-		// const labelText = "queue";
-		// const textHeight = getTextHeight(labelText, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, ctx);
-		//
-		// y += textHeight;
-		//
-		// drawLabel(labelText, x, y, theme.Typography.TitleFontSize, theme.Typography.TitleFontFamily, theme.Colors.TextPrimary, ctx);
-
-		// y += 8;
-
 		ctx.fillStyle = theme.Colors.BoardBackground;
 		ctx.fillRect(x, y, width, height);
 
