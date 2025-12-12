@@ -3,6 +3,7 @@ import { GameTheme } from "../../theme";
 import { Widget } from "../../ui/widget";
 import { BoardWidget } from "../../ui/widgets/board";
 import { ColorBlock } from "../../ui/widgets/color_block";
+import { Countdown } from "../../ui/widgets/countdown";
 import { HoldContainerWidget } from "../../ui/widgets/hold_container";
 import { Label } from "../../ui/widgets/label";
 import { Center, HBox, Overlay, SizedBox, Spacer, VBox } from "../../ui/widgets/layout";
@@ -28,7 +29,8 @@ export class BlitzMode implements GameMode {
 
 	private state: BlitzState;
 	private timer: GameTimer;
-	private countdown = 0;
+	private countdown = 2;
+	private countdownTimer = this.countdown;
 	private linesCleared = 0;
 
 	constructor() {
@@ -73,13 +75,7 @@ export class BlitzMode implements GameMode {
 	}
 
 	private createUiLayer(): Widget {
-		const countdownLayer = new Conditional(
-			() => this.state == BlitzState.Ready,
-			new Center(new Label(() => {
-				const t = Math.ceil(this.countdown);
-				return t > 0 ? t.toString() : "GO!";
-			}, "title", "center").setFill(true)),
-		);
+		const countdownLayer = new Center(new Countdown(() => this.countdownTimer+1));
 
 		const resultLayer = new Conditional(
 			() => this.state == BlitzState.Gameover || this.state == BlitzState.Finished,
@@ -145,7 +141,7 @@ export class BlitzMode implements GameMode {
 		this.game.reset();
 
 		this.linesCleared = 0;
-		this.countdown = 3;
+		this.countdownTimer = this.countdown;
 		this.state = BlitzState.Ready;
 
 		this.game.events.clear();
@@ -169,13 +165,14 @@ export class BlitzMode implements GameMode {
 
 		switch (this.state) {
 			case BlitzState.Ready:
-				this.countdown -= dt;
-				if (this.countdown <= 0) {
+				this.countdownTimer -= dt;
+				if (this.countdownTimer <= 0) {
 					this.state = BlitzState.Running;
 					this.context?.effects.playTetrisCleared();
 				}
 				break;
 			case BlitzState.Running:
+				if (this.countdownTimer > -2.0) this.countdownTimer -= dt;
 				this.timer.update(dt);
 				this.controller.update(dt);
 				this.game.update(dt);
