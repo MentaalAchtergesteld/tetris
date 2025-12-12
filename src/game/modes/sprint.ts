@@ -29,12 +29,14 @@ export class SprintMode implements GameMode {
 
 	createLayout(): Widget {
 		const LEFT_COLUMN = new VBox([
+			new Label(() => "hold", "title", "left").setFill(true),
+			new SizedBox(0, 8),
 			new HoldContainerWidget(() => this.game.getHoldType()),
 			new Spacer(),
-			new Label(() => "Time", "title", "left").setFill(true),
+			new Label(() => "time", "title", "right").setFill(true),
 			new Label(() => this.timer.format(), "data", "right").setFill(true),
 			new SizedBox(0, 16),
-			new Label(() => "Lines", "title", "left").setFill(true),
+			new Label(() => "lines", "title", "right").setFill(true),
 			new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
 		], 8).setAlign("start").setFill(true);
 
@@ -49,6 +51,8 @@ export class SprintMode implements GameMode {
 		], 8).setAlign("start").setFill(true);
 
 		const RIGHT_COLUMN = new VBox([
+			new Label(() => "queue", "title", "right").setFill(true),
+			new SizedBox(0, 8),
 			new PieceQueueWidget(() => this.game.getQueue(5)),
 		], 8).setAlign("start").setFill(true);
 		
