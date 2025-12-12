@@ -42,6 +42,7 @@ export class SprintMode implements GameMode {
 			new BoardWidget(
 				() => this.game.getGrid(),
 				() => this.game.getDimensions(),
+				() => this.game.getVisibleHeight(),
 				() => this.game.getCurrentPiece(),
 				() => this.game.getCurrentPieceLowestY(),
 			),
@@ -67,8 +68,13 @@ export class SprintMode implements GameMode {
 
 		this.game.events.on("lineClear", (lines) => {
 			this.linesCleared += lines;
-			ctx.shake.trigger(ctx.shakeIntensityMultiplier * lines); // REPLACE WITH SETTING
-			ctx.effects.playLinesCleared(lines);
+			ctx.shake.trigger(ctx.shakeIntensityMultiplier * lines);
+
+			if (lines < 4) {
+				ctx.effects.playLinesCleared(lines);
+			} else {
+				ctx.effects.playTetrisCleared();
+			}
 
 			if (this.linesCleared >= 40) this.finish();
 		});
@@ -98,8 +104,7 @@ export class SprintMode implements GameMode {
 	}
 
 	update(dt: number): void {
-		if (this.game.isGameOver) return; 
-		this.timer.update(dt);
+		if (!this.game.isGameOver) this.timer.update(dt);
 		this.controller.update(dt);
 		this.game.update(dt);
 	}

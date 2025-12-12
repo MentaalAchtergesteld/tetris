@@ -67,6 +67,7 @@ export class Game {
 	public getDimensions(): { width: number, height: number } {
 		return { width: this.board.width, height: this.board.height }
 	}
+	public getVisibleHeight(): number { return this.board.visibleHeight }
 	public getQueue(count: number): TetrominoType[] { return this.queue.peek(count) }
 	public getHoldType(): TetrominoType | null { return this.hold.piece }
 	public getCurrentPiece(): Piece | null { return this.currentPiece }
@@ -74,7 +75,7 @@ export class Game {
 	private spawnNewCurrentPiece(type: TetrominoType) {
 		this.currentPiece = Piece.spawn(type);
 		this.currentPiece.x = Math.floor((this.board.width - this.currentPiece.shape.length)/2);
-		this.currentPiece.y = 0;
+		this.currentPiece.y = this.board.visibleHeight-3;
 		this.events.emit("spawn", undefined);
 	}
 
@@ -83,6 +84,12 @@ export class Game {
 
 		this.board.lockPiece(this.currentPiece);
 		this.events.emit("lock", undefined);
+		if (this.board.isFullyInBuffer(this.currentPiece)) {
+			this.isGameOver = true;
+			this.events.emit("gameOver", undefined);
+			return;
+		}
+
 		let lines = this.board.checkLineClear();
 		if (lines > 0) this.events.emit("lineClear", lines);
 

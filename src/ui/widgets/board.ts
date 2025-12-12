@@ -7,27 +7,31 @@ import { drawPieceShape, pieceIndexToColor } from "../util";
 export class BoardWidget extends Widget {
 		private gridProvider: () => number[][];
 		private sizeProvider: () => { width: number, height: number };
+		private visibleHeightProvider: () => number;
 		private activePieceProvider: () => Piece | null;
 		private previewYProvider: () => number;
 
 	constructor(
 		gridProvider: () => number[][],
 		sizeProvider: () => { width: number, height: number },
+		visibleHeightProvider: () => number,
 		activePieceProvider: () => Piece | null,
 		previewYProvider: () => number,
 	) {
 		super();
 		this.gridProvider = gridProvider;
 		this.sizeProvider = sizeProvider;
+		this.visibleHeightProvider = visibleHeightProvider;
 		this.activePieceProvider = activePieceProvider;
 		this.previewYProvider = previewYProvider;
 	}
 
 	getMinSize(theme: GameTheme): Size {
 		const size = this.sizeProvider();
+		const visibleHeight = this.visibleHeightProvider();
 		return {
 			width: size.width * theme.Layout.BlockSize,
-			height: size.height * theme.Layout.BlockSize,
+			height: visibleHeight * theme.Layout.BlockSize,
 		}
 	}
 
@@ -63,17 +67,27 @@ export class BoardWidget extends Widget {
 		const bs = theme.Layout.BlockSize; 
 		const grid = this.gridProvider();
 
-		const { width, height } = this.getMinSize(theme);
+		const totalDimensions = this.sizeProvider();
+		const visibleHeight = this.visibleHeightProvider();
+
+		const skylineRows = 4;
+
+		const bufferHeight = totalDimensions.height - visibleHeight;
+
+		const pixelWidth = totalDimensions.width * bs;
+		const pixelHeight = visibleHeight * bs;
 
 		ctx.fillStyle = theme.Colors.BoardBackground;
-		ctx.fillRect(x, y, width, height);
+		ctx.fillRect(x, y, pixelWidth, pixelHeight);
 
 		ctx.lineWidth = 1;
 		ctx.strokeStyle = theme.Colors.PieceBorder;
 
-		for (let row = 0; row < grid.length; row++) {
-			for (let col = 0; col < grid[row].length; col ++) {
-				const value = grid[row][col];
+		for (let row = -skylineRows; row < visibleHeight; row++) {
+			const rowIndex = row + bufferHeight;
+			const actualRow = grid[rowIndex];
+			for (let col = 0; col < totalDimensions.width; col ++) {
+				const value = actualRow[col];
 				const px = x + (col * bs);
 				const py = y + (row * bs);
 
@@ -81,16 +95,19 @@ export class BoardWidget extends Widget {
 					ctx.fillStyle = pieceIndexToColor(value, theme);
 					ctx.fillRect(px, py, bs, bs);
 				}
-				ctx.strokeStyle = theme.Colors.PieceBorder;
-				ctx.strokeInnerRect(px, py, bs, bs);
+
+				if (row >= 0) {
+					ctx.strokeStyle = theme.Colors.PieceBorder;
+					ctx.strokeInnerRect(px, py, bs, bs);
+				}
 			}
 		}
 
 		const piece = this.activePieceProvider();
 		if (piece) {
 			const previewY = this.previewYProvider();
-			drawPieceShape(piece.shape, x + (piece.x*bs), y + (previewY*bs), bs, true, theme, ctx);
-			drawPieceShape(piece.shape, x + (piece.x*bs), y + (piece.y*bs), bs, false, theme, ctx);
+			drawPieceShape(piece.shape, x + (piece.x*bs), y + ((previewY-visibleHeight)*bs), bs, true, theme, ctx);
+			drawPieceShape(piece.shape, x + (piece.x*bs), y + ((piece.y-visibleHeight)*bs), bs, false, theme, ctx);
 		};
 
 		ctx.lineWidth = theme.Layout.BorderWidth;
@@ -102,9 +119,9 @@ export class BoardWidget extends Widget {
 		ctx.lineWidth = borderWidth;
 		ctx.beginPath();
 		ctx.moveTo(x-offset, y-borderWidth);
-		ctx.lineTo(x-offset, y+height+offset);
-		ctx.lineTo(x+width+offset, y+height+offset);
-		ctx.lineTo(x+width+offset, y-borderWidth);
+		ctx.lineTo(x-offset, y+pixelHeight+offset);
+		ctx.lineTo(x+pixelWidth+offset, y+pixelHeight+offset);
+		ctx.lineTo(x+pixelWidth+offset, y-borderWidth);
 		ctx.stroke();
 	}
 }
