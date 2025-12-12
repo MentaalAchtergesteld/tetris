@@ -442,7 +442,7 @@ export class QuickHUD {
 				return folder;
 			},
 			addButton: (l, cb) => {
-				this.addButton(l, cb);
+				this.addButton(l, cb, content);
 				return folder;
 			},
 			addLabeledValue: (l, v) => {
