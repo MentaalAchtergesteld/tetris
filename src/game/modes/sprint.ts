@@ -4,21 +4,32 @@ import { Widget } from "../../ui/widget";
 import { Game, DEFAULT_GAME_SETTINGS } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
-import { VBox, HBox, Center, Spacer, SizedBox } from "../../ui/widgets/layout";
+import { VBox, HBox, Center, Spacer, SizedBox, Overlay } from "../../ui/widgets/layout";
 import { HoldContainerWidget } from "../../ui/widgets/hold_container";
 import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
 import { BoardWidget } from "../../ui/widgets/board";
 import { Label } from "../../ui/widgets/label";
+import { Conditional } from "../../ui/widgets/logic";
+import { ColorBlock } from "../../ui/widgets/color_block";
+
+enum SprintState {
+	Ready,
+	Running,
+	Finished,
+	Gameover,
+}
 
 export class SprintMode implements GameMode {
 	private game: Game;
 	private controller: LocalController;
-	private timer: GameTimer;
-	private layout: Widget;
-
 	private context: GameContext | null = null;
 
+	private layout: Widget;
+
+	private state: SprintState = SprintState.Ready;
+	private timer: GameTimer;
 	private linesCleared = 0;
+	private countdown = 3;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
@@ -26,8 +37,8 @@ export class SprintMode implements GameMode {
 		this.layout = this.createLayout();
 		this.timer = new GameTimer();
 	}
-
-	createLayout(): Widget {
+	
+	private createGameLayer(): Widget {
 		const LEFT_COLUMN = new VBox([
 			new Label(() => "hold", "title", "left").setFill(true),
 			new SizedBox(0, 8),
@@ -55,42 +66,73 @@ export class SprintMode implements GameMode {
 			new SizedBox(0, 8),
 			new PieceQueueWidget(() => this.game.getQueue(5)),
 		], 8).setAlign("start").setFill(true);
-		
+
 		return new Center(new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16));
 	}
 
-	finish() {
-		this.timer.stop();
+	private createUiLayer(): Widget {
+		const countdownLayer = new Conditional(
+			() => this.state == SprintState.Ready,
+			new Center(new Label(() => {
+				const t = Math.ceil(this.countdown);
+				return t > 0 ? t.toString() : "GO!";
+			}, "title", "center").setFill(true)),
+		);
+
+		const resultLayer = new Conditional(
+			() => this.state == SprintState.Gameover || this.state == SprintState.Finished,
+			new Overlay([
+				new ColorBlock("rgba(0, 0, 0, 0.75)"),
+				new Center(new VBox([
+					new Label(() => this.state == SprintState.Finished ? "victory" : "game over", "title", "center"),
+					new SizedBox(0, 16),
+					new Label(() => `final time: ${this.timer.format()}`, "data", "center"),
+					new SizedBox(0, 16),
+					new Label(() => "press R to restart", "data", "center"),
+				])),
+			])
+		)
+
+		return new Overlay([countdownLayer, resultLayer]);
 	}
 
-	onEnter(ctx: GameContext): void {
-		this.context = ctx;
+	private createLayout(): Widget {
+		const gameLayer = this.createGameLayer();	
+		const uiLayer = this.createUiLayer();
 
-		this.game.reset();
-		this.linesCleared = 0;
-		this.timer.reset();
+		return new Overlay([gameLayer, uiLayer]);
+	}
+
+	private victory() {
+		this.state = SprintState.Finished;
+		this.timer.stop();
+		console.log("VICTORY TIME: ", this.timer.format());
+	}
+
+	private bindEvents() {
+		if (!this.context) return;
 
 		this.game.events.on("lineClear", (lines) => {
 			this.linesCleared += lines;
-			ctx.shake.trigger(ctx.shakeIntensityMultiplier * lines);
+			this.context!.shake.trigger(this.context!.shakeIntensityMultiplier * lines);
 
 			if (lines < 4) {
-				ctx.effects.playLinesCleared(lines);
+				this.context!.effects.playLinesCleared(lines);
 			} else {
-				ctx.effects.playTetrisCleared();
+				this.context!.effects.playTetrisCleared();
 			}
 
-			if (this.linesCleared >= 40) this.finish();
+			if (this.linesCleared >= 40) this.victory();
 		});
 
 		this.game.events.on("lock", () => {
-			ctx.recoil.trigger(100);
-			ctx.effects.playHardDrop();
+			this.context!.recoil.trigger(100);
+			this.context?.effects.playLock();
 		});
 
 		this.game.events.on("gameOver", () => {
-			console.log("RIP");
-			ctx.effects.playGameOver();
+			this.context!.effects.playGameOver();
+			this.state = SprintState.Gameover;
 		});
 
 		this.game.events.on("start", () => {
@@ -98,8 +140,24 @@ export class SprintMode implements GameMode {
 			this.timer.start();
 			this.linesCleared = 0;
 		});
+	}
 
+	private reset() {
+		this.game.reset();
+
+		this.linesCleared = 0;
+		this.timer.reset();
+		this.countdown = 3;
+		this.state = SprintState.Ready;
+
+		this.game.events.clear();
+		this.bindEvents();
 		this.game.start();
+	}
+
+	onEnter(ctx: GameContext): void {
+		this.context = ctx;
+		this.reset();
 	}
 
 	onExit(): void {
@@ -108,9 +166,23 @@ export class SprintMode implements GameMode {
 	}
 
 	update(dt: number): void {
-		if (!this.game.isGameOver) this.timer.update(dt);
-		this.controller.update(dt);
-		this.game.update(dt);
+		if (this.controller.input.isDown("KeyR")) this.reset();
+		if (this.state == SprintState.Finished || this.state == SprintState.Gameover) return;
+
+		switch (this.state) {
+			case SprintState.Ready:
+				this.countdown -= dt;
+				if (this.countdown <= 0) {
+					this.state = SprintState.Running;
+					this.context?.effects.playTetrisCleared();
+				}
+				break;
+			case SprintState.Running:
+				this.timer.update(dt);
+				this.controller.update(dt);
+				this.game.update(dt);
+		}
+
 	}
 
 	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {

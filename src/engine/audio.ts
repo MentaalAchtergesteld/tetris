@@ -183,7 +183,7 @@ export class EffectsManager {
 		this.manager.playTriangleSlide(400, 1200, 0.5, 0.2);
 	}
 
-	playHardDrop() {
+	playLock() {
 		this.manager.playTriangle(100, 0.15, 1);
 	}
 

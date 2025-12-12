@@ -28,7 +28,7 @@ export interface Controller {
 
 export class LocalController implements Controller {
 	private game: Game;
-	private input: InputState;
+	input: InputState;
 	settings: ControllerSettings;
 
 	private dasTimer = 0;
@@ -99,6 +99,5 @@ export class LocalController implements Controller {
 		} else this.hardDropPressed = false;
 
 		if (this.input.isDown("KeyC")) this.game.swapHold();
-		if (this.input.isDown("KeyR")) { this.game.reset(); this.game.start(); };
 	}
 }

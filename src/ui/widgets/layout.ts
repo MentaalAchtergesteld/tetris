@@ -179,3 +179,26 @@ export class SizedBox extends Widget {
 
 	draw(): void {}
 }
+
+export class Overlay extends Widget {
+	children: Widget[];
+
+	constructor(children: Widget[]) {
+		super();
+		this.children = children;
+	}
+
+	getMinSize(theme: GameTheme): Size {
+		return this.children.reduce((acc, child) => {
+			const { width, height } = child.getMinSize(theme);
+			return {
+				width: Math.max(acc.width, width),
+				height: Math.max(acc.height, height),
+			}
+		}, { width: 0, height: 0});
+	}
+
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+		this.children.forEach(c => c.draw(ctx, x, y, w, h, theme)); 
+	}
+}
