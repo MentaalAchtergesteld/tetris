@@ -85,43 +85,51 @@ export function getRotatedPiece(piece: Piece, dir: -1 | 1): Piece {
 	return new Piece(piece.type, rotated, piece.x, piece.y, newRot);
 }
 
+// J, L, S, T, Z Offset Data
+// Matches the table in "How Guideline SRS Really Works"
 const SRS_OFFSETS_JLSTZ = [
-	// 0 - North
-	[{x:0, y:0},{x: 0, y:0},{x: 0, y: 0},{x:0, y: 0},{x: 0, y: 0}],
-	// 1 - East
-	[{x:0, y:0},{x:+1, y:0},{x:+1, y:-1},{x:0, y:+2},{x:+1, y:+2}],
-	// 2 - South
-	[{x:0, y:0},{x: 0, y:0},{x: 0, y: 0},{x:0, y: 0},{x: 0, y: 0}],
-	// 3 - West
-	[{x:0, y:0},{x:-1, y:0},{x:-1, y:-1},{x:0, y:+2},{x:-1, y:+2}]
+    // 0 - North
+    [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}],
+    // 1 - East (R)
+    [{x:0, y:0}, {x:1, y:0}, {x:1, y:-1}, {x:0, y:2}, {x:1, y:2}],
+    // 2 - South
+    [{x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}, {x:0, y:0}],
+    // 3 - West (L)
+    [{x:0, y:0}, {x:-1, y:0}, {x:-1, y:-1}, {x:0, y:2}, {x:-1, y:2}]
 ];
 
 const SRS_OFFSETS_I = [
-	// 0 - North
-	[{x: 0, y: 0},{x:-1, y: 0},{x:+2, y: 0},{x:-1, y: 0},{x:+2, y: 0}],
-	// 1 - East
-	[{x:-1, y: 0},{x: 0, y: 0},{x: 0, y: 0},{x: 0, y:+1},{x: 0, y:-2}],
-	// 2 - South
-	[{x:-1, y:+1},{x:+1, y:+1},{x:-2, y:+1},{x:+1, y: 0},{x:-2, y: 0}],
-	// 3 - West
-	[{x: 0, y:+1},{x: 0, y:+1},{x: 0, y:+1},{x: 0, y:-1},{x: 0, y:+2}]
+    // 0 - North
+    [{x: 0, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}],
+    
+    // 1 - East
+    // TETR.IO SRS+: Start op (0,0) -> Geen wobble naar rechts!
+    [{x: 0, y: 0}, {x:-1, y: 0}, {x:+2, y: 0}, {x:-1, y:+1}, {x:+2, y:-2}],
+    
+    // 2 - South
+    [{x:-1, y:+1}, {x: 0, y:+1}, {x:-3, y:+1}, {x: 0, y: 0}, {x:-3, y: 0}],
+    
+    // 3 - West
+    // TETR.IO SRS+: Start op (0,0) -> Symmetrisch met East
+    [{x: 0, y: 0}, {x:+1, y: 0}, {x:-2, y: 0}, {x:+1, y:+1}, {x:-2, y:-2}]
 ];
 
 export function getSRSOffsets(piece: Piece, newRot: Rotation): { x: number, y: number }[] {
-	if (piece.type == "O") return [{x:0,y:0}];
+	if (piece.type === "O") return [{x:0, y:0}];
 
-	const table = piece.type == "I" ? SRS_OFFSETS_I : SRS_OFFSETS_JLSTZ;
+	const table = piece.type === "I" ? SRS_OFFSETS_I : SRS_OFFSETS_JLSTZ;
 	const currentOffsets = table[piece.rotation];
 	const newOffsets = table[newRot];
 
 	const kicks: { x: number, y: number }[] = [];
+
 	for (let i = 0; i < 5; i++) {
 		const valX = currentOffsets[i].x - newOffsets[i].x;
 		const valY = currentOffsets[i].y - newOffsets[i].y;
 
 		kicks.push({
-			x: valX,
-			y: -valY
+				x: valX,
+				y: -valY 
 		});
 	}
 
