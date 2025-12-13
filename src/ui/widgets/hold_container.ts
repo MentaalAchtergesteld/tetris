@@ -1,15 +1,14 @@
 import {  MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "../../game/piece";
-import { GameTheme } from "../../theme";
+import { Color, GameTheme } from "../../theme";
 import { Size, Widget } from "../widget";
 import { drawPieceCentered } from "../util";
 
 export class HoldContainerWidget extends Widget {
-	private holdPieceProvider: () => TetrominoType | null;
 
-	constructor(holdPieceProvider: () => TetrominoType | null) {
-		super();
-		this.holdPieceProvider = holdPieceProvider;
-	}
+	constructor(
+		private holdPieceProvider: () => TetrominoType | null,
+		private outlineProvider: (theme: GameTheme) => Color,
+	) { super(); }
 
 	getMinSize(theme: GameTheme): Size {
 		return {
@@ -27,7 +26,7 @@ export class HoldContainerWidget extends Widget {
 		const borderWidth = 4;
 		const offset = borderWidth/2;
 
-		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.strokeStyle = this.outlineProvider(theme);
 		ctx.lineWidth = borderWidth;
 
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);

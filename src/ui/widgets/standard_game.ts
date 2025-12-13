@@ -1,5 +1,6 @@
+import { Game } from "../../game/game";
 import { Piece, TetrominoType } from "../../game/piece";
-import { GameTheme } from "../../theme";
+import { Color, GameTheme } from "../../theme";
 import { Size, Widget } from "../widget";
 import { BoardWidget } from "./board";
 import { HoldContainerWidget } from "./hold_container";
@@ -11,17 +12,35 @@ export class StandardGame extends Widget {
 	private root: Widget;
 	private infoWidgets: Widget[];
 
+	private gridProvider: () => number[][];
+	private sizeProvider: () => { width: number, height: number };
+	private visibleHeightProvider: () => number;
+	private activePieceProvider: () => Piece | null;
+	private previewYProvider: () => number;
+	private holdPieceProvider: () => TetrominoType | null;
+	private queueProvider: () => TetrominoType[];
+	private outlineProvider: (theme: GameTheme) => Color;
+
 	constructor(
-		private gridProvider: () => number[][],
-		private sizeProvider: () => { width: number, height: number },
-		private visibleHeightProvider: () => number,
-		private activePieceProvider: () => Piece | null,
-		private previewYProvider: () => number,
-		private holdPieceProvider: () => TetrominoType | null,
-		private queueProvider: () => TetrominoType[],
+		game: Game,
+		dangerProvider: () => number,
 		infoWidgets: Widget[] = [],
 	) {
 		super();
+
+		this.gridProvider = () => game.getGrid();
+		this.sizeProvider = () => game.getDimensions();
+		this.visibleHeightProvider = () => game.getVisibleHeight();
+		this.activePieceProvider = () => game.getCurrentPiece();
+		this.previewYProvider = () => game.getCurrentPieceLowestY();
+		this.holdPieceProvider = () => game.getHoldType();
+		this.queueProvider = () => game.getQueue(5);
+
+		this.outlineProvider = (theme: GameTheme) => {
+			if (dangerProvider() > 0) return "hsl(0, 80%, 50%)";
+			else return theme.Colors.BoardBorder;;
+		};
+
 		this.infoWidgets = infoWidgets;
 		this.root = this.build();
 	}
@@ -30,7 +49,7 @@ export class StandardGame extends Widget {
 		const LEFT_COLUMN = new VBox([
 			new Label(() => "hold", "title", "left").setFill(true),
 			new SizedBox(0, 8),
-			new HoldContainerWidget(this.holdPieceProvider),
+			new HoldContainerWidget(this.holdPieceProvider, this.outlineProvider),
 			new Spacer(),
 			...this.infoWidgets,
 		], 8).setAlign("start").setFill(true);
@@ -41,14 +60,15 @@ export class StandardGame extends Widget {
 				this.sizeProvider,
 				this.visibleHeightProvider,
 				this.activePieceProvider,
-				this.previewYProvider
+				this.previewYProvider,
+				this.outlineProvider,
 			),
 		], 8).setAlign("start").setFill(true);
 
 		const RIGHT_COLUMN = new VBox([
 			new Label(() => "queue", "title", "right").setFill(true),
 			new SizedBox(0, 8),
-			new PieceQueueWidget(this.queueProvider),
+			new PieceQueueWidget(this.queueProvider, this.outlineProvider),
 		], 8).setAlign("start").setFill(true);
 
 		return new Center(new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16));

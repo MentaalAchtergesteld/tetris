@@ -1,15 +1,13 @@
 import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "../../game/piece";
-import { GameTheme } from "../../theme";
+import { Color, GameTheme } from "../../theme";
 import { drawPieceCentered } from "../util";
 import { Size, Widget } from "../widget";
 
 export class PieceQueueWidget extends Widget {
-	private queueProvider: () => TetrominoType[];
-
-	constructor(queueProvider: () => TetrominoType[]) {
-		super();
-		this.queueProvider = queueProvider;
-	}
+	constructor(
+		private queueProvider: () => TetrominoType[],
+		private outlineProvider: (theme: GameTheme) => Color,
+	) {	super(); }
 
 	getMinSize(theme: GameTheme): Size {
 		const queue = this.queueProvider();
@@ -29,7 +27,7 @@ export class PieceQueueWidget extends Widget {
 		const borderWidth = 4;
 		const offset = borderWidth/2;
 
-		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.strokeStyle = this.outlineProvider(theme);
 		ctx.lineWidth = borderWidth;
 
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);

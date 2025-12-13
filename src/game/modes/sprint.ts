@@ -1,7 +1,7 @@
 import { LocalController, DEFAULT_CONTROLLER_SETTINGS } from "../../engine/input";
 import { GameTheme } from "../../theme";
 import { Widget } from "../../ui/widget";
-import { Game, DEFAULT_GAME_SETTINGS } from "../game";
+import { Game, DEFAULT_GAME_SETTINGS, calculateDangerLevel } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
 import { VBox, Center, SizedBox, Overlay } from "../../ui/widgets/layout";
@@ -43,24 +43,15 @@ export class SprintMode implements GameMode {
 	}
 	
 	private createGameLayer(): Widget {
-		return new StandardGame(
-			() => this.game.getGrid(),
-			() => this.game.getDimensions(),
-			() => this.game.getVisibleHeight(),
-			() => this.game.getCurrentPiece(),
-			() => this.game.getCurrentPieceLowestY(),
-			() => this.game.getHoldType(),
-			() => this.game.getQueue(5),
-			[
-				new Label(() => "40 lines", "title", "right").setFill(true),
-				new SizedBox(0, 16),
-				new Label(() => "time", "title", "right").setFill(true),
-				new Label(() => this.timer.format(), "data", "right").setFill(true),
-				new SizedBox(0, 16),
-				new Label(() => "lines", "title", "right").setFill(true),
-				new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
-			]
-		);
+		return new StandardGame(this.game, () => calculateDangerLevel(this.game, 0.8), [
+			new Label(() => "40 lines", "title", "right").setFill(true),
+			new SizedBox(0, 16),
+			new Label(() => "time", "title", "right").setFill(true),
+			new Label(() => this.timer.format(), "data", "right").setFill(true),
+			new SizedBox(0, 16),
+			new Label(() => "lines", "title", "right").setFill(true),
+			new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
+		]);
 	}
 
 	private createUiLayer(): Widget {

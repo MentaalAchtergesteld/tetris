@@ -72,6 +72,15 @@ export class Game {
 	public getQueue(count: number): TetrominoType[] { return this.queue.peek(count) }
 	public getHoldType(): TetrominoType | null { return this.hold.piece }
 	public getCurrentPiece(): Piece | null { return this.currentPiece }
+	public getCurrentPieceLowestY(): number {
+		if (!this.currentPiece) return 0;
+		let yOffset = 0;
+
+		while (this.canMoveCurrentPiece(0, yOffset+1)) yOffset+=1;
+		return this.currentPiece.y + yOffset;
+	}
+	public getOccupiedHeight() { return this.board.getOccupiedHeight(); }
+
 
 	private spawnNewCurrentPiece(type: TetrominoType) {
 		this.currentPiece = Piece.spawn(type);
@@ -104,14 +113,6 @@ export class Game {
 	private canMoveCurrentPiece(dx: number, dy: number): boolean {
 		if (!this.currentPiece) return false;
 		return this.board.isValidPosition(this.currentPiece.shape, this.currentPiece.x+dx, this.currentPiece.y+dy);
-	}
-
-	getCurrentPieceLowestY(): number {
-		if (!this.currentPiece) return 0;
-		let yOffset = 0;
-
-		while (this.canMoveCurrentPiece(0, yOffset+1)) yOffset+=1;
-		return this.currentPiece.y + yOffset;
 	}
 
 	public moveCurrentPiece(dx: number, dy: number): boolean {
@@ -226,4 +227,14 @@ export class Game {
 		this.updateGravity(dt);
 		this.updateLock(dt);
 	}
+}
+
+export function calculateDangerLevel(game: Game, threshold: number = 0.8): number {
+	const visibleHeight = game.getVisibleHeight();
+	const currentHeight = game.getOccupiedHeight();
+
+	const ratio = currentHeight / visibleHeight;
+	
+	if (ratio < threshold) return 0;
+	else return (ratio - threshold) / (1 - threshold)
 }

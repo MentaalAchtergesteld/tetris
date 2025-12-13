@@ -1,30 +1,18 @@
 import "../../extensions/canvas";
 import { Widget, Size } from "../widget";
 import { Piece } from "../../game/piece";
-import { GameTheme } from "../../theme";
+import { Color, GameTheme } from "../../theme";
 import { drawPieceShape, pieceIndexToColor } from "../util";
 
 export class BoardWidget extends Widget {
-		private gridProvider: () => number[][];
-		private sizeProvider: () => { width: number, height: number };
-		private visibleHeightProvider: () => number;
-		private activePieceProvider: () => Piece | null;
-		private previewYProvider: () => number;
-
 	constructor(
-		gridProvider: () => number[][],
-		sizeProvider: () => { width: number, height: number },
-		visibleHeightProvider: () => number,
-		activePieceProvider: () => Piece | null,
-		previewYProvider: () => number,
-	) {
-		super();
-		this.gridProvider = gridProvider;
-		this.sizeProvider = sizeProvider;
-		this.visibleHeightProvider = visibleHeightProvider;
-		this.activePieceProvider = activePieceProvider;
-		this.previewYProvider = previewYProvider;
-	}
+		private gridProvider: () => number[][],
+		private sizeProvider: () => { width: number, height: number },
+		private visibleHeightProvider: () => number,
+		private activePieceProvider: () => Piece | null,
+		private previewYProvider: () => number,
+		private outlineProvider: (theme: GameTheme) => Color,
+	) { super(); }
 
 	getMinSize(theme: GameTheme): Size {
 		const size = this.sizeProvider();
@@ -115,7 +103,7 @@ export class BoardWidget extends Widget {
 
 		const borderWidth = 4;
 		const offset = borderWidth/2;
-		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.strokeStyle = this.outlineProvider(theme);
 		ctx.lineWidth = borderWidth;
 		ctx.beginPath();
 		ctx.moveTo(x-offset, y-borderWidth);

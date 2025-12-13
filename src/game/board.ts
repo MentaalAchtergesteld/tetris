@@ -53,6 +53,13 @@ export class Board {
 		return lowestYInUse <= bufferHeight - 2;
 	}
 
+	getOccupiedHeight(): number {
+		for (let y = 0; y < this.height; y++) {
+			if (this.grid[y].find(v => v > 0)) return this.height-y;
+		}
+		return 0;
+	}
+
 	lockPiece(piece: Piece) {
 		piece.shape.forEach((row, y) => {
 			row.forEach((value, x) => {
