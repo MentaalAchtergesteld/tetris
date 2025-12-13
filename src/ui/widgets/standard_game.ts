@@ -19,7 +19,7 @@ export class StandardGame extends Widget {
 	private previewYProvider: () => number;
 	private holdPieceProvider: () => TetrominoType | null;
 	private queueProvider: () => TetrominoType[];
-	private outlineProvider: (theme: GameTheme) => Color;
+	private dangerProvider: () => number;
 
 	constructor(
 		game: Game,
@@ -35,11 +35,7 @@ export class StandardGame extends Widget {
 		this.previewYProvider = () => game.getCurrentPieceLowestY();
 		this.holdPieceProvider = () => game.getHoldType();
 		this.queueProvider = () => game.getQueue(5);
-
-		this.outlineProvider = (theme: GameTheme) => {
-			if (dangerProvider() > 0) return "hsl(0, 80%, 50%)";
-			else return theme.Colors.BoardBorder;;
-		};
+		this.dangerProvider = dangerProvider;
 
 		this.infoWidgets = infoWidgets;
 		this.root = this.build();
@@ -49,7 +45,7 @@ export class StandardGame extends Widget {
 		const LEFT_COLUMN = new VBox([
 			new Label(() => "hold", "title", "left").setFill(true),
 			new SizedBox(0, 8),
-			new HoldContainerWidget(this.holdPieceProvider, this.outlineProvider),
+			new HoldContainerWidget(this.holdPieceProvider, this.dangerProvider),
 			new Spacer(),
 			...this.infoWidgets,
 		], 8).setAlign("start").setFill(true);
@@ -61,14 +57,14 @@ export class StandardGame extends Widget {
 				this.visibleHeightProvider,
 				this.activePieceProvider,
 				this.previewYProvider,
-				this.outlineProvider,
+				this.dangerProvider,
 			),
 		], 8).setAlign("start").setFill(true);
 
 		const RIGHT_COLUMN = new VBox([
 			new Label(() => "queue", "title", "right").setFill(true),
 			new SizedBox(0, 8),
-			new PieceQueueWidget(this.queueProvider, this.outlineProvider),
+			new PieceQueueWidget(this.queueProvider, this.dangerProvider),
 		], 8).setAlign("start").setFill(true);
 
 		return new Center(new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16));

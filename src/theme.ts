@@ -6,6 +6,7 @@ export interface GameTheme {
 		Background: Color,
 		BoardBackground: Color,
 		BoardBorder: Color,
+		DangerBorder: Color,
 		PieceI: Color;
 		PieceJ: Color;
 		PieceL: Color;
@@ -41,6 +42,7 @@ export const DEFAULT_THEME: GameTheme = {
 		Background: "hsl(0, 0%, 15%)",
 		BoardBackground: "hsla(0, 0%, 5%, 0.8)",
 		BoardBorder: "hsl(0, 0%, 90%)",
+		DangerBorder: "hsl(0, 80%, 50%)",
 		PieceI: "hsl(190, 90%, 60%)",
 		PieceJ: "hsl(240, 90%, 60%)",
 		PieceL: "hsl(35, 90%, 60%)",

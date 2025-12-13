@@ -1,7 +1,7 @@
 import "../../extensions/canvas";
 import { Widget, Size } from "../widget";
 import { Piece } from "../../game/piece";
-import { Color, GameTheme } from "../../theme";
+import { GameTheme } from "../../theme";
 import { drawPieceShape, pieceIndexToColor } from "../util";
 
 export class BoardWidget extends Widget {
@@ -11,7 +11,7 @@ export class BoardWidget extends Widget {
 		private visibleHeightProvider: () => number,
 		private activePieceProvider: () => Piece | null,
 		private previewYProvider: () => number,
-		private outlineProvider: (theme: GameTheme) => Color,
+		private dangerProvider: () => number,
 	) { super(); }
 
 	getMinSize(theme: GameTheme): Size {
@@ -103,13 +103,20 @@ export class BoardWidget extends Widget {
 
 		const borderWidth = 4;
 		const offset = borderWidth/2;
-		ctx.strokeStyle = this.outlineProvider(theme);
 		ctx.lineWidth = borderWidth;
+		ctx.lineWidth = borderWidth;
+
+		ctx.save();
 		ctx.beginPath();
 		ctx.moveTo(x-offset, y-borderWidth);
 		ctx.lineTo(x-offset, y+pixelHeight+offset);
 		ctx.lineTo(x+pixelWidth+offset, y+pixelHeight+offset);
 		ctx.lineTo(x+pixelWidth+offset, y-borderWidth);
+		ctx.strokeStyle = theme.Colors.BoardBorder;
 		ctx.stroke();
+		ctx.strokeStyle = theme.Colors.DangerBorder;
+		ctx.globalAlpha = this.dangerProvider();
+		ctx.stroke();
+		ctx.restore();
 	}
 }

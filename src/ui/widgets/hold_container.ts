@@ -7,7 +7,7 @@ export class HoldContainerWidget extends Widget {
 
 	constructor(
 		private holdPieceProvider: () => TetrominoType | null,
-		private outlineProvider: (theme: GameTheme) => Color,
+		private dangerProvider: () => number,
 	) { super(); }
 
 	getMinSize(theme: GameTheme): Size {
@@ -26,10 +26,14 @@ export class HoldContainerWidget extends Widget {
 		const borderWidth = 4;
 		const offset = borderWidth/2;
 
-		ctx.strokeStyle = this.outlineProvider(theme);
+		ctx.save();
 		ctx.lineWidth = borderWidth;
-
+		ctx.strokeStyle = theme.Colors.BoardBorder;
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
+		ctx.strokeStyle = theme.Colors.DangerBorder;
+		ctx.globalAlpha = this.dangerProvider();
+		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
+		ctx.restore();
 
 		const piece = this.holdPieceProvider();
 		if (!piece) return;

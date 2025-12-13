@@ -1,7 +1,7 @@
 import { LocalController, DEFAULT_CONTROLLER_SETTINGS } from "../../engine/input";
 import { GameTheme } from "../../theme";
 import { Widget } from "../../ui/widget";
-import { Game, DEFAULT_GAME_SETTINGS, calculateDangerLevel } from "../game";
+import { Game, DEFAULT_GAME_SETTINGS } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
 import { VBox, Center, SizedBox, Overlay } from "../../ui/widgets/layout";
@@ -11,6 +11,7 @@ import { ColorBlock } from "../../ui/widgets/color_block";
 import { Countdown } from "../../ui/widgets/countdown";
 import { StandardGame } from "../../ui/widgets/standard_game";
 import { Recoil, Shaker } from "../../ui/widgets/effects";
+import { DangerLevel } from "../danger";
 
 enum SprintState {
 	Ready,
@@ -34,16 +35,18 @@ export class SprintMode implements GameMode {
 
 	private shaker: Shaker;
 	private recoil: Recoil;
+	private dangerLevel: DangerLevel;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
 		this.controller = new LocalController(this.game, DEFAULT_CONTROLLER_SETTINGS);
 		this.layout = this.createLayout();
 		this.timer = new GameTimer();
+		this.dangerLevel = new DangerLevel(this.game, this.shaker);
 	}
 	
 	private createGameLayer(): Widget {
-		return new StandardGame(this.game, () => calculateDangerLevel(this.game, 0.8), [
+		return new StandardGame(this.game, () => this.dangerLevel.getLevel(), [
 			new Label(() => "40 lines", "title", "right").setFill(true),
 			new SizedBox(0, 16),
 			new Label(() => "time", "title", "right").setFill(true),
@@ -111,6 +114,7 @@ export class SprintMode implements GameMode {
 			// this.context!.recoil.trigger(100);
 			this.recoil.trigger(100);
 			this.context?.effects.playLock();
+			this.shaker.setRumble(0);
 		});
 
 		this.game.events.on("gameOver", () => {
@@ -126,6 +130,7 @@ export class SprintMode implements GameMode {
 	}
 
 	private reset() {
+		this.dangerLevel.reset();
 		this.game.reset();
 
 		this.linesCleared = 0;
@@ -151,6 +156,7 @@ export class SprintMode implements GameMode {
 	update(dt: number): void {
 		if (this.shaker) this.shaker.update(dt);
 		if (this.recoil) this.recoil.update(dt);
+		this.dangerLevel.update(dt);
 
 		if (this.controller.input.isDown("KeyR")) this.reset();
 		if (this.state == SprintState.Finished || this.state == SprintState.Gameover) return;

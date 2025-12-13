@@ -8,7 +8,8 @@ import { Label } from "../../ui/widgets/label";
 import { Center,  Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
 import { Conditional } from "../../ui/widgets/logic";
 import { StandardGame } from "../../ui/widgets/standard_game";
-import { calculateDangerLevel, DEFAULT_GAME_SETTINGS, Game } from "../game";
+import { DangerLevel } from "../danger";
+import { DEFAULT_GAME_SETTINGS, Game } from "../game";
 import { GameContext, GameMode } from "../modes";
 import { GameTimer } from "../timer";
 
@@ -34,16 +35,18 @@ export class BlitzMode implements GameMode {
 
 	private shaker: Shaker;
 	private recoil: Recoil;
+	private dangerLevel: DangerLevel;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
 		this.controller = new LocalController(this.game, DEFAULT_CONTROLLER_SETTINGS);
 		this.layout = this.createLayout();
 		this.timer = new GameTimer("down", 120);
+		this.dangerLevel = new DangerLevel(this.game, this.shaker);
 	}
 
 	private createGameLayer(): Widget {
-		return new StandardGame(this.game, () => calculateDangerLevel(this.game, 0.8), [
+		return new StandardGame(this.game, () => this.dangerLevel.getLevel(), [
 			new Label(() => "blitz", "title", "right").setFill(true),
 			new SizedBox(0, 16),
 			new Label(() => "time", "title", "right").setFill(true),
@@ -118,6 +121,7 @@ export class BlitzMode implements GameMode {
 		this.game.events.on("gameOver", () => {
 			this.context!.effects.playGameOver();
 			this.state = BlitzState.Gameover;
+			this.shaker.setRumble(0);
 		});
 
 		this.game.events.on("start", () => {
@@ -150,6 +154,10 @@ export class BlitzMode implements GameMode {
 	}
 
 	update(dt: number): void {
+		if (this.shaker) this.shaker.update(dt);
+		if (this.recoil) this.recoil.update(dt);
+		this.dangerLevel.update(dt);
+
 		if (this.controller.input.isDown("KeyR")) this.reset();
 		if (this.state == BlitzState.Finished || this.state == BlitzState.Gameover) return;
 

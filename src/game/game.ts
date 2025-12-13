@@ -228,13 +228,3 @@ export class Game {
 		this.updateLock(dt);
 	}
 }
-
-export function calculateDangerLevel(game: Game, threshold: number = 0.8): number {
-	const visibleHeight = game.getVisibleHeight();
-	const currentHeight = game.getOccupiedHeight();
-
-	const ratio = currentHeight / visibleHeight;
-	
-	if (ratio < threshold) return 0;
-	else return (ratio - threshold) / (1 - threshold)
-}

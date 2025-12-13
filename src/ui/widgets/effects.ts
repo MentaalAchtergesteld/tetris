@@ -61,6 +61,7 @@ export class Scale extends Widget {
 
 export class Shaker extends Widget {
 	private trauma = 0;
+	private rumble = 0;
 
 	constructor(
 		private child: Widget,
@@ -68,6 +69,7 @@ export class Shaker extends Widget {
 	) { super(); }
 
 	trigger(intensity: number) { this.trauma += intensity; }
+	setRumble(intensity: number) { this.rumble = intensity; }
 
 	getMinSize(theme: GameTheme): Size {
 		return this.child.getMinSize(theme);
@@ -79,10 +81,11 @@ export class Shaker extends Widget {
 	}
 
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		if (this.trauma <= 0) { this.child.draw(ctx, x, y, w, h, theme); return; } 
+		const current = Math.max(this.rumble, this.trauma);
+		if (current <= 0) { this.child.draw(ctx, x, y, w, h, theme); return; } 
 
-		const shakeX = (Math.random() - 0.5) * this.trauma;
-		const shakeY = (Math.random() - 0.5) * this.trauma;
+		const shakeX = (Math.random() - 0.5) * current;
+		const shakeY = (Math.random() - 0.5) * current;
 
 		ctx.save();
 		ctx.translate(shakeX, shakeY);
