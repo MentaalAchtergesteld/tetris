@@ -74,6 +74,18 @@ export class Board {
 		})
 	}
 
+	addGarbage(amount: number, holeIndex?: number): void {
+		this.grid = this.grid.slice(amount);
+
+		for (let i = 0; i < amount; i++) {
+			const row = new Array(this.width).fill(1);
+			const hole = holeIndex ?? Math.floor(Math.random() * this.width);
+			row[hole] = 0;
+
+			this.grid.push(row);
+		}
+	}
+
 	checkLineClear(): number {
 		let linesCleared = 0;
 		for (let y = this.height-1; y >= 0; y--) {

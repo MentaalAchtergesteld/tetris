@@ -34,6 +34,8 @@ export interface GameEvents {
 
 	"hold": void,
 	"spawn": void,
+
+	"garbageAdded": number,
 }
 
 export class Game {
@@ -113,6 +115,11 @@ export class Game {
 	private canMoveCurrentPiece(dx: number, dy: number): boolean {
 		if (!this.currentPiece) return false;
 		return this.board.isValidPosition(this.currentPiece.shape, this.currentPiece.x+dx, this.currentPiece.y+dy);
+	}
+
+	public addGarbage(amount: number, holeIndex?: number): void {
+		this.board.addGarbage(amount, holeIndex);
+		this.events.emit("garbageAdded", amount);
 	}
 
 	public moveCurrentPiece(dx: number, dy: number): boolean {

@@ -111,15 +111,14 @@ export class SprintMode implements GameMode {
 		});
 
 		this.game.events.on("lock", () => {
-			// this.context!.recoil.trigger(100);
 			this.recoil.trigger(100);
 			this.context?.effects.playLock();
-			this.shaker.setRumble(0);
 		});
 
 		this.game.events.on("gameOver", () => {
 			this.context!.effects.playGameOver();
 			this.state = SprintState.Gameover;
+			this.shaker.setRumble(0);
 		});
 
 		this.game.events.on("start", () => {
