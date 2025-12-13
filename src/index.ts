@@ -4,7 +4,6 @@ import { DEFAULT_GAME_SETTINGS } from "./game/game";
 import { DEFAULT_CONTROLLER_SETTINGS } from "./engine/input";
 import { QuickHUD, HUDPosition } from "./engine/quickhud";
 import { DEFAULT_THEME } from "./theme";
-import { ScreenRecoil, ScreenShake } from "./engine/vfx";
 import { SprintMode } from "./game/modes/sprint";
 import { GameContext, GameMode } from "./game/modes";
 import { BlitzMode } from "./game/modes/blitz";
@@ -29,25 +28,17 @@ setCanvasToWindowSize();
 
 document.body.appendChild(canvas);
 
-const screenShake = new ScreenShake();
-
-const recoilSettings = {
-		tension: 150,
-		damping: 30,
-		mass: 1,
-	}
-const screenRecoil = new ScreenRecoil(recoilSettings);
-
 const audioManager = new AudioManager();
 const effectsManager = new EffectsManager(audioManager);
 
 const gameContext: GameContext = {
 	effects: effectsManager,
 	audio: audioManager,
-	shake: screenShake,
+	shakeDecay: 30,
 	shakeIntensityMultiplier: 3,
-	recoil: screenRecoil,
-	recoilSettings
+	recoilTension: 150,
+	recoilDamping: 30,
+	recoilMass: 1,
 }
 
 let gamemode: GameMode = new SprintMode();
@@ -64,11 +55,11 @@ new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 
 	.parent().addFolder("Visual")
 	.addRange("Shake Intensity Mult", 0, 20, gameContext.shakeIntensityMultiplier, 0.5, (val) => gameContext.shakeIntensityMultiplier = val)
-	.addRange("Shake Decay", 1, 100, screenShake.shakeDecay, 1, (val) => screenShake.shakeDecay = val)
+	.addRange("Shake Decay", 1, 100, gameContext.shakeDecay, 1, (val) => gameContext.shakeDecay = val)
 
-	.addRange("Recoil Tension", 1, 500, recoilSettings.tension, 1, (val) => recoilSettings.tension = val)
-	.addRange("Recoil Damping", 1, 500, recoilSettings.damping, 1, (val) => recoilSettings.damping = val)
-	.addRange("Recoil Mass", 1, 100, recoilSettings.mass, 1, (val) => recoilSettings.mass = val)
+	.addRange("Recoil Tension", 1, 500, gameContext.recoilTension, 1, (val) => gameContext.recoilTension = val)
+	.addRange("Recoil Damping", 1, 500, gameContext.recoilDamping, 1, (val) => gameContext.recoilDamping = val)
+	.addRange("Recoil Mass", 1, 100, gameContext.recoilMass, 1, (val) => gameContext.recoilMass = val)
 
 new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addFolder("Sound")
@@ -93,12 +84,8 @@ function loop(time: number) {
 
 	ctx.save();
 
-	screenRecoil.update(ctx, dt);
-	screenShake.update(ctx, dt);
-
 	gamemode.update(dt);
 	gamemode.draw(ctx, DEFAULT_THEME);
-	
 
 	ctx.restore();
 

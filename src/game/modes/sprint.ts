@@ -10,6 +10,7 @@ import { Conditional } from "../../ui/widgets/logic";
 import { ColorBlock } from "../../ui/widgets/color_block";
 import { Countdown } from "../../ui/widgets/countdown";
 import { StandardGame } from "../../ui/widgets/standard_game";
+import { Recoil, Shaker } from "../../ui/widgets/effects";
 
 enum SprintState {
 	Ready,
@@ -30,6 +31,9 @@ export class SprintMode implements GameMode {
 	private linesCleared = 0;
 	private countdown = 2;
 	private countdownTimer = this.countdown;
+
+	private shaker: Shaker;
+	private recoil: Recoil;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
@@ -79,8 +83,17 @@ export class SprintMode implements GameMode {
 		return new Overlay([countdownLayer, resultLayer]);
 	}
 
-	private createLayout(): Widget { return new Overlay([this.createGameLayer(), this.createUiLayer()]) }
-
+	private createLayout(): Widget {
+		const layout = new Overlay([this.createGameLayer(), this.createUiLayer()]);
+		this.shaker = new Shaker(layout);
+		this.recoil = new Recoil(
+			this.shaker,
+			() => this.context?.recoilTension || 0,
+			() => this.context?.recoilDamping || 0,
+			() => this.context?.recoilMass    || 0,
+		);
+		return this.recoil;
+	}
 
 	private victory() {
 		this.state = SprintState.Finished;
@@ -92,7 +105,8 @@ export class SprintMode implements GameMode {
 
 		this.game.events.on("lineClear", (lines) => {
 			this.linesCleared += lines;
-			this.context!.shake.trigger(this.context!.shakeIntensityMultiplier * lines);
+			// this.context!.shake.trigger(this.context!.shakeIntensityMultiplier * lines);
+			this.shaker.trigger(this.context!.shakeIntensityMultiplier * lines);
 
 			if (lines < 4) {
 				this.context!.effects.playLinesCleared(lines);
@@ -104,7 +118,8 @@ export class SprintMode implements GameMode {
 		});
 
 		this.game.events.on("lock", () => {
-			this.context!.recoil.trigger(100);
+			// this.context!.recoil.trigger(100);
+			this.recoil.trigger(100);
 			this.context?.effects.playLock();
 		});
 
@@ -144,6 +159,9 @@ export class SprintMode implements GameMode {
 	}
 
 	update(dt: number): void {
+		if (this.shaker) this.shaker.update(dt);
+		if (this.recoil) this.recoil.update(dt);
+
 		if (this.controller.input.isDown("KeyR")) this.reset();
 		if (this.state == SprintState.Finished || this.state == SprintState.Gameover) return;
 

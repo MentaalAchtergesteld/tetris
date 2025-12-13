@@ -1,14 +1,14 @@
 import { GameTheme } from "../theme";
 import { AudioManager, EffectsManager } from "../engine/audio";
-import { ScreenShake, ScreenRecoil, ScreenRecoilSettings } from "../engine/vfx";
 
 export interface GameContext {
 	effects: EffectsManager,
 	audio: AudioManager;
-	shake: ScreenShake;
+	shakeDecay: number;
 	shakeIntensityMultiplier: number;
-	recoil: ScreenRecoil;
-	recoilSettings: ScreenRecoilSettings,
+	recoilTension: number;
+	recoilDamping: number;
+	recoilMass: number;
 }
 
 export interface GameMode {

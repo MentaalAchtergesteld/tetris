@@ -58,3 +58,78 @@ export class Scale extends Widget {
 		ctx.restore();
 	}
 }
+
+export class Shaker extends Widget {
+	private trauma = 0;
+
+	constructor(
+		private child: Widget,
+		private decayProvider: () => number = () => 30,
+	) { super(); }
+
+	trigger(intensity: number) { this.trauma += intensity; }
+
+	getMinSize(theme: GameTheme): Size {
+		return this.child.getMinSize(theme);
+	}
+
+	update(dt: number): void {
+		if (this.trauma > 0) this.trauma -= dt * this.decayProvider();
+		else this.trauma = 0;
+	}
+
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+		if (this.trauma <= 0) { this.child.draw(ctx, x, y, w, h, theme); return; } 
+
+		const shakeX = (Math.random() - 0.5) * this.trauma;
+		const shakeY = (Math.random() - 0.5) * this.trauma;
+
+		ctx.save();
+		ctx.translate(shakeX, shakeY);
+		this.child.draw(ctx, x, y, w, h, theme);
+		ctx.restore();
+	}
+}
+
+export class Recoil extends Widget {
+	private yPosition = 0;
+	private yVelocity = 0;
+	
+	constructor(
+		private child: Widget,
+		private tensionProvider: () => number = () => 150,
+		private dampingProvider: () => number = () => 20,
+		private massProvider: () => number = () => 1,
+	) { super(); }
+
+	trigger(amount: number) { this.yVelocity += amount; }
+
+	getMinSize(theme: GameTheme): Size {
+	    return this.child.getMinSize(theme);
+	}
+
+	update(dt: number): void {
+		const springForce = -this.tensionProvider() * this.yPosition;
+
+		const dampingForce = -this.dampingProvider() * this.yVelocity;
+
+		const acceleration = (springForce + dampingForce) / this.massProvider();
+
+		this.yVelocity += acceleration * dt;
+		this.yPosition += this.yVelocity * dt;
+
+		if (Math.abs(this.yPosition) < 0.1 && Math.abs(this.yVelocity) < 0.1) {
+			this.yPosition = 0;
+			this.yVelocity = 0;
+		}
+	}
+
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+		if (this.yPosition == 0) { this.child.draw(ctx, x, y, w, h, theme); return; }
+			
+		ctx.save();
+		ctx.translate(0, this.yPosition);
+		this.child.draw(ctx, x, y, w, h, theme);
+		ctx.restore();
+	}
+}
