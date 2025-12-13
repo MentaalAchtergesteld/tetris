@@ -1,14 +1,12 @@
 import { DEFAULT_CONTROLLER_SETTINGS, LocalController } from "../../engine/input";
 import { GameTheme } from "../../theme";
 import { Widget } from "../../ui/widget";
-import { BoardWidget } from "../../ui/widgets/board";
 import { ColorBlock } from "../../ui/widgets/color_block";
 import { Countdown } from "../../ui/widgets/countdown";
-import { HoldContainerWidget } from "../../ui/widgets/hold_container";
+import { Recoil, Shaker } from "../../ui/widgets/effects";
 import { Label } from "../../ui/widgets/label";
-import { Center, HBox, Overlay, SizedBox, Spacer, VBox } from "../../ui/widgets/layout";
+import { Center,  Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
 import { Conditional } from "../../ui/widgets/logic";
-import { PieceQueueWidget } from "../../ui/widgets/piece_queue";
 import { StandardGame } from "../../ui/widgets/standard_game";
 import { DEFAULT_GAME_SETTINGS, Game } from "../game";
 import { GameContext, GameMode } from "../modes";
@@ -33,6 +31,9 @@ export class BlitzMode implements GameMode {
 	private countdown = 2;
 	private countdownTimer = this.countdown;
 	private linesCleared = 0;
+
+	private shaker: Shaker;
+	private recoil: Recoil;
 
 	constructor() {
 		this.game = new Game(DEFAULT_GAME_SETTINGS);
@@ -82,7 +83,17 @@ export class BlitzMode implements GameMode {
 		return new Overlay([countdownLayer, resultLayer]);
 	}
 
-	private createLayout(): Widget { return new Overlay([this.createGameLayer(), this.createUiLayer()]) }
+	private createLayout(): Widget {
+		const layout = new Overlay([this.createGameLayer(), this.createUiLayer()]);
+		this.shaker = new Shaker(layout);
+		this.recoil = new Recoil(
+			this.shaker,
+			() => this.context?.recoilTension || 0,
+			() => this.context?.recoilDamping || 0,
+			() => this.context?.recoilMass    || 0,
+		);
+		return this.recoil;
+	}
 
 	private victory() {
 		this.state = BlitzState.Finished;
@@ -94,7 +105,7 @@ export class BlitzMode implements GameMode {
 
 		this.game.events.on("lineClear", (lines) => {
 			this.linesCleared += lines;
-			this.context!.shake.trigger(this.context!.shakeIntensityMultiplier * lines);
+			this.shaker.trigger(this.context!.shakeIntensityMultiplier * lines);
 
 			if (lines < 4) {
 				this.context!.effects.playLinesCleared(lines);
@@ -109,7 +120,7 @@ export class BlitzMode implements GameMode {
 		});
 
 		this.game.events.on("lock", () => {
-			this.context!.recoil.trigger(100);
+			this.recoil.trigger(100);
 			this.context?.effects.playLock();
 		});
 

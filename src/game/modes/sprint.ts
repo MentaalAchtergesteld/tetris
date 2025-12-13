@@ -105,7 +105,6 @@ export class SprintMode implements GameMode {
 
 		this.game.events.on("lineClear", (lines) => {
 			this.linesCleared += lines;
-			// this.context!.shake.trigger(this.context!.shakeIntensityMultiplier * lines);
 			this.shaker.trigger(this.context!.shakeIntensityMultiplier * lines);
 
 			if (lines < 4) {
