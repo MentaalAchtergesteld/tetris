@@ -16,6 +16,7 @@ export interface NetworkEvents {
 		opponentId: string,
 	},
 	"action": GameAction,
+	"garbage": number,
 }
 
 export class NetworkClient {
@@ -56,6 +57,10 @@ export class NetworkClient {
 		this.socket.on("action", (action: GameAction) => {
 			this.events.emit("action", action);
 		});
+
+		this.socket.on("garbage", (amount: number) => {
+			this.events.emit("garbage", amount);
+		});
 	}
 
 	public joinQueue() {
@@ -63,7 +68,7 @@ export class NetworkClient {
 		this.events.emit("joinQueue", undefined);
 	}
 
-	public sendAction(action: GameAction) {
-		this.socket.emit("action", action);
+	public sendAction(action: GameAction, data: number = 0) {
+		this.socket.emit("action", { action, data });
 	}
 }

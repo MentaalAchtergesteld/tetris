@@ -1,55 +1,69 @@
-import { Socket } from "socket.io";
+import { Player, ServerMatch } from "./server_match.js";
 
 export class Room {
 	public id: string;
-	public players: Socket[] = [];
+	private players: Player[] = [];
+
+	private currentMatch: ServerMatch | null = null;
+
 	public isOpen: boolean = true;
-	
+
 	constructor(id: string) {
 		this.id = id;
 	}
 
-	public addPlayer(socket: Socket): boolean {
-		if (!this.isOpen || this.players.length >= 2) return false;
+	private handleMatchEnd(winnerId: string) {
+		console.log(`Match finished. Winner: ${winnerId}`);
+		this.currentMatch = null;
 
-		this.players.push(socket);
-		socket.join(this.id);
+		this.players.forEach(p => {
+			p.isReady = false;
+			p.emit("lobby_state", { status: "waiting"} );
+		});
 
-		if (this.players.length == 2) this.startGame();
-		return true;
-	}
-
-	public removePlayer(socketId: string) {
-		this.players = this.players.filter(p => p.id != socketId);
-
-		if (!this.isOpen && this.players.length == 1) {
-			const winner = this.players[0];
-			winner.emit("game_over", { won: true, reason: "opponent_disconnect" });
-			this.close();
-		}
+		this.isOpen = true;
 	}
 
 	private startGame() {
+		console.log(`Starting match in Room ${this.id}`);
+		this.currentMatch = new ServerMatch(this.players);
 		this.isOpen = false;
-		console.log(`Game started in room ${this.id}.`);
 
-		const sharedSeed = Math.floor(Math.random() * 100000);
+		this.currentMatch.events.on("matchEnd", (winnerId: string) => this.handleMatchEnd(winnerId));
+	}
 
-		this.players.forEach(player => {
-			const opponent = this.players.find(p => p.id != player.id);
+	private checkReadyStatus() {
+		const allReady = this.players.every(p => p.isReady);
+		if (allReady && this.players.length >= 2) this.startGame();
+	}
 
-			player.on("action", action => {
-				opponent?.emit("action", action);	
-			});
+	public addPlayer(player: Player) {
+		this.players.push(player);
 
-			player.emit("match_start", {
-				seed: sharedSeed,
-				opponentId: opponent?.id
-			});
+		player.on("action", (packet) => {
+			if (!this.currentMatch) return;
+			this.currentMatch.onPlayerAction(player.id, packet);
 		});
+
+		player.on("ready", () => this.checkReadyStatus());
 	}
 
-	private close() {
-		this.isOpen = false;
+	public removePlayer(playerId: string) {
+		this.players = this.players.filter(p => p.id != playerId);
+
+		if (this.currentMatch) {
+			console.log(`Player ${playerId} has left during a match.`);
+			this.currentMatch.forceEnd(playerId);
+			this.currentMatch = null;
+		}
+
+		if (this.players.length > 0) {
+			this.players[0].emit("lobby_state", { status: "waiting_for_opponent" } );
+			this.players[0].isReady = false;
+			this.isOpen = true;
+		}
 	}
+
+	public hasPlayer(id: string) { return this.players.find(p => p.id == id) != null }
+	public isEmpty() { return this.players.length == 0; }
 }

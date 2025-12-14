@@ -3,6 +3,7 @@ import cors from "cors";
 import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { Room } from "./room.js";
+import { Player } from "./server_match.js";
 
 const app = express();
 app.use(cors());
@@ -17,37 +18,36 @@ const PORT = 9000;
 let rooms: Room[] = [];
 
 io.on("connection", (socket: Socket) => {
-	console.log(`New connection: ${socket.id}`);
+	const player = new Player(socket);
+	console.log(`New connection: ${player.id} (${player.name})`);
 
 	socket.on("join_queue", () => {
-		console.log(`${socket.id} is searching for a match...`);
+		console.log(`${player.id} is searching for a match...`);
 
 		let room = rooms.find(r => r.isOpen);
-
 		if (room) {
-			console.log(`Match found! Joining room ${room.id}`);
-			room.addPlayer(socket);
+			console.log(`Match found! Joining room ${room.id}.`);
 		} else {
 			const newRoomId = `room_${Date.now()}`;
-			console.log(`No match found, creating new room: ${newRoomId}`);
+			console.log(`No match found, creating new room: ${newRoomId}.`);
 
 			room = new Room(newRoomId);
 			rooms.push(room);
-			room.addPlayer(socket);
 		}
+
+		room.addPlayer(player);
 	});
 
 	socket.on("disconnect", () => {
-		console.log(`Disconnect: ${socket.id}`);
+		console.log(`Disconnect: ${player.id}`);
+		const room = rooms.find(r => r.hasPlayer(player.id));
 
-		const room = rooms.find(r => r.players.some(p => p.id == socket.id));
+		if (!room) return;
+		room.removePlayer(player.id);
 
-		if (room) {
-			room.removePlayer(socket.id);
-			if (room.players.length == 0) {
-				rooms = rooms.filter(r => r.id != room.id);
-				console.log(`Room ${room.id} deleted (empty).`);
-			}
+		if (room.isEmpty()) {
+			rooms = rooms.filter(r => r.id != room.id);
+			console.log(`Room ${room.id} deleted (empty).`);
 		}
 	});
 });
