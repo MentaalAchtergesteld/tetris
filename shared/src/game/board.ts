@@ -7,7 +7,7 @@ export class Board {
 	width: number;
 	height: number;
 	visibleHeight: number;
-	grid: number[][];
+	grid: number[][] = [];
 
 	constructor(rng: RNG, width: number = 10, height: number = 20) {
 		this.rng = rng;

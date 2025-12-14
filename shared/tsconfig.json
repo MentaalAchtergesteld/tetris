@@ -9,7 +9,11 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "composite": true
+    "composite": false
   },
-  "include": ["src"],
+	"include": [
+    "./src/**/*.ts",
+    "./src/**/*.d.ts"
+  ],
+	"exclude": ["node_modules", "dist"]
 }

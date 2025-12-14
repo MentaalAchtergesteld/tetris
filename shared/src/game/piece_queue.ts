@@ -5,7 +5,7 @@ export class PieceQueue {
 	private readonly rng: RNG;
 	private readonly MIN_LENGTH = 7;
 
-	private queue: TetrominoType[];
+	private queue: TetrominoType[] = [];
 
 	constructor(rng: RNG) {
 		this.rng = rng;
