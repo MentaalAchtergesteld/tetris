@@ -4,9 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-		"dev:client": "npm run dev --workspace=@tetris/client",
-		"build:shared": "npm run build --workspace=@tetris/shared",
-		"install:all": "npm install"
+    "dev:client": "npm run dev --workspace=@tetris/client",
+    "dev:server": "npm run dev --workspace=@tetris/server",
+    "build:shared": "npm run build --workspace=@tetris/shared",
+    "install:all": "npm install"
   },
   "repository": {
     "type": "git",
@@ -19,9 +20,16 @@
     "url": "https://github.com/MentaalAchtergesteld/tetris/issues"
   },
   "homepage": "https://github.com/MentaalAchtergesteld/tetris#readme",
-	"workspaces": [
-		"client",
-		"server",
-		"shared"
-	]
+  "workspaces": [
+    "client",
+    "server",
+    "shared"
+  ],
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.0.2",
+    "tsx": "^4.21.0",
+    "typescript": "^5.9.3"
+  }
 }

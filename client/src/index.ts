@@ -8,6 +8,7 @@ import { SprintMode } from "./game/modes/sprint";
 import { GameContext, GameMode } from "./game/modes";
 import { BlitzMode } from "./game/modes/blitz";
 import { MultiplayerMode } from "./game/modes/multiplayer";
+import { NetworkClient } from "./engine/network/client";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -96,6 +97,11 @@ function loop(time: number) {
 
 async function init() {
 	await document.fonts.ready;
+
+	const net = new NetworkClient();
+	net.connect();
+
+	(window as any).join = () => net.joinQueue();
 	
 	gamemode.onEnter(gameContext);
 
