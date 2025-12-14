@@ -4,6 +4,7 @@ import { HoldContainer } from "../game/hold_container";
 import { PieceQueue } from "../game/piece_queue";
 import { EventEmitter } from "../engine/events";
 import { TetrominoType } from "./piece";
+import { GameAction } from "../engine/input/input_manager";
 
 export interface GameSettings {
 	gravity: number;
@@ -22,6 +23,7 @@ export const DEFAULT_GAME_SETTINGS: GameSettings = {
 export interface GameEvents {
 	"start": void,
 	"gameOver": void,
+	"reset": void,
 
 	"move": number,
 	"drop": number,
@@ -64,6 +66,10 @@ export class Game {
 		this.hold = new HoldContainer();
 		this.queue = new PieceQueue();
 		this.events = new EventEmitter<GameEvents>();
+
+		this.board.reset();
+		this.queue.reset();
+		this.hold.reset();
 	}
 
 	public getGrid(): number[][] { return this.board.grid }
@@ -83,6 +89,19 @@ export class Game {
 	}
 	public getOccupiedHeight() { return this.board.getOccupiedHeight(); }
 
+	public handleInput(action: GameAction): boolean {
+		console.log(action);
+		switch (action) {
+			case GameAction.MoveRight: return this.moveCurrentPiece( 1, 0);
+			case GameAction.MoveLeft:  return this.moveCurrentPiece(-1, 0);
+			case GameAction.HardDrop:  return this.hardDrop();
+			case GameAction.Hold:      return this.swapHold();
+			case GameAction.RotateCW:  return this.rotateCurrentPiece( 1);
+			case GameAction.RotateCCW: return this.rotateCurrentPiece(-1);
+			case GameAction.Reset:     {this.reset(); return true;}
+			default: return false;
+		}
+	}
 
 	private spawnNewCurrentPiece(type: TetrominoType) {
 		this.currentPiece = Piece.spawn(type);
@@ -158,16 +177,17 @@ export class Game {
 		return false;
 	}
 
-	public hardDrop() {
+	public hardDrop(): boolean {
 		if (!this.currentPiece || this.isGameOver) return false;
 		const lowestY = this.getCurrentPieceLowestY();
 		this.currentPiece.y = lowestY;
 		this.events.emit("hardDrop", undefined);
 		this.endTurn();
+		return true;
 	}
 
-	public swapHold() {
-		if (this.hold.isLocked || !this.currentPiece || this.isGameOver) return;
+	public swapHold(): boolean {
+		if (this.hold.isLocked || !this.currentPiece || this.isGameOver) return false;
 
 		const typeFromHold = this.hold.swap(this.currentPiece.type);
 
@@ -178,6 +198,7 @@ export class Game {
 		this.gravityTimer = 0;
 
 		this.events.emit("hold", undefined);
+		return true;
 	}
 
 	public reset() {
@@ -195,9 +216,11 @@ export class Game {
 		this.gravityMultiplier = 1;
 
 	  this.isGameOver = false;
+		this.events.emit("reset", undefined);
 	}
 
 	public start() {
+		this.reset();
 		this.spawnNewCurrentPiece(this.queue.getNext());
 		this.events.emit("start", undefined);
 	}
