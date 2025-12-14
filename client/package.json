@@ -11,9 +11,9 @@
   "keywords": [],
   "author": "Mentaal",
   "license": "ISC",
-	"dependencies": [
-		"@tetris/shared"
-	],
+	"dependencies": {
+		"@tetris/shared": "*"
+	},
   "devDependencies": {
     "typescript": "^5.9.3",
     "vite": "^7.2.7"
