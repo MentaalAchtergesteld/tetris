@@ -94,7 +94,6 @@ export class Game {
 	public getOccupiedHeight() { return this.board.getOccupiedHeight(); }
 
 	public handleInput(action: GameAction): boolean {
-		console.log(action);
 		switch (action) {
 			case GameAction.MoveRight: return this.moveCurrentPiece( 1, 0);
 			case GameAction.MoveLeft:  return this.moveCurrentPiece(-1, 0);
