@@ -1,21 +1,20 @@
+import { RNG } from "../engine/rng";
 import { TetrominoType } from "./piece";
 
-function createPieceBag(): TetrominoType[] {
-	const bag: TetrominoType[] = ["I", "J", "L", "O", "S", "T", "Z"];
-	for (let i = bag.length - 1; i > 0; i--) {
-		const j = Math.floor(Math.random() * (i + 1));
-		[bag[i], bag[j]] = [bag[j], bag[i]];
-	}
-	return bag;
-}
-
 export class PieceQueue {
-	private queue: TetrominoType[];
+	private readonly rng: RNG;
 	private readonly MIN_LENGTH = 7;
 
+	private queue: TetrominoType[];
+
+	constructor(rng: RNG) {
+		this.rng = rng;
+	}
+
 	private refill() {
+		const bag: TetrominoType[] = ["I", "J", "L", "O", "S", "T", "Z"];
 		while (this.queue.length < this.MIN_LENGTH) {
-			this.queue.push(...createPieceBag())
+			this.queue.push(...this.rng.shuffleArray(bag))
 		}
 	}
 

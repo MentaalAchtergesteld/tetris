@@ -13,6 +13,7 @@ import { Center, Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
 import { Countdown } from "../../ui/widgets/countdown";
 import { Conditional } from "../../ui/widgets/logic";
 import { ColorBlock } from "../../ui/widgets/color_block";
+import { RNG } from "../../engine/rng";
 
 export enum GameState {
 	Ready,
@@ -38,7 +39,7 @@ export abstract class LocalMode implements GameMode {
 	protected countdownTimer = 2;
 
 	constructor(timerDirection: "up" | "down", timeLimit: number = 0) {
-		this.game = new Game(DEFAULT_GAME_SETTINGS);
+		this.game = new Game(new RNG(Math.random()), DEFAULT_GAME_SETTINGS);
 		this.input = new InputManager();
 		this.controller = new LocalController(this.game, this.input, DEFAULT_CONTROLLER_SETTINGS);
 		this.timer = new GameTimer(timerDirection, timeLimit);

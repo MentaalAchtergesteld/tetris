@@ -1,12 +1,17 @@
+import { RNG } from "../engine/rng";
 import { Piece } from "./piece";
 
 export class Board {
+	private readonly rng: RNG;
+
 	width: number;
 	height: number;
 	visibleHeight: number;
 	grid: number[][];
 
-	constructor(width: number = 10, height: number = 20) {
+	constructor(rng: RNG, width: number = 10, height: number = 20) {
+		this.rng = rng;
+
 		this.width = width;
 		this.visibleHeight = height;
 
@@ -79,7 +84,7 @@ export class Board {
 
 		for (let i = 0; i < amount; i++) {
 			const row = new Array(this.width).fill(1);
-			const hole = holeIndex ?? Math.floor(Math.random() * this.width);
+			const hole = holeIndex ?? this.rng.nextIntRange(0, this.width);
 			row[hole] = 0;
 
 			this.grid.push(row);

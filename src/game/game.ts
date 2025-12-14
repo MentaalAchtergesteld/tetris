@@ -5,6 +5,7 @@ import { PieceQueue } from "../game/piece_queue";
 import { EventEmitter } from "../engine/events";
 import { TetrominoType } from "./piece";
 import { GameAction } from "../engine/input/input_manager";
+import { RNG } from "../engine/rng";
 
 export interface GameSettings {
 	gravity: number;
@@ -41,6 +42,9 @@ export interface GameEvents {
 }
 
 export class Game {
+	public readonly rng: RNG;
+	public readonly events: EventEmitter<GameEvents>;
+
 	public currentPiece: Piece | null = null;
 
 	public settings: GameSettings;
@@ -57,15 +61,15 @@ export class Game {
 
 	public isGameOver: boolean = false;
 
-	public events: EventEmitter<GameEvents>;
-
-	constructor(settings: GameSettings) {
+	constructor(rng: RNG, settings: GameSettings = DEFAULT_GAME_SETTINGS) {
 		this.settings = settings
 
-		this.board = new Board(this.settings.boardWidth, this.settings.boardHeight);
-		this.hold = new HoldContainer();
-		this.queue = new PieceQueue();
+		this.rng = rng;
 		this.events = new EventEmitter<GameEvents>();
+
+		this.board = new Board(rng, this.settings.boardWidth, this.settings.boardHeight);
+		this.hold = new HoldContainer();
+		this.queue = new PieceQueue(rng);
 
 		this.board.reset();
 		this.queue.reset();
@@ -107,6 +111,7 @@ export class Game {
 		this.currentPiece = Piece.spawn(type);
 		this.currentPiece.x = Math.floor((this.board.width - this.currentPiece.shape.length)/2);
 		this.currentPiece.y = this.board.visibleHeight-3;
+
 		this.events.emit("spawn", undefined);
 	}
 
