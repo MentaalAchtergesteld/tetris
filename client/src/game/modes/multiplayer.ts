@@ -7,12 +7,14 @@ import { ColorBlock } from "../../ui/widgets/color_block";
 import { Recoil, Shaker } from "../../ui/widgets/effects";
 import { Label } from "../../ui/widgets/label";
 import { Center, HBox, Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
-import { Conditional } from "../../ui/widgets/logic";
+import { Conditional, Switch } from "../../ui/widgets/logic";
 import { StandardGame } from "../../ui/widgets/standard_game";
 import { DangerLevel } from "../danger";
 import { GameContext, GameMode } from "../modes"
+import { MatchStartPacket, NetworkClient } from "../../engine/network/client";
 
 enum State {
+	Queue,
 	Ready,
 	Running,
 	Finished,
@@ -23,11 +25,15 @@ export class MultiplayerMode implements GameMode {
 	private input: InputManager;
 	private context: GameContext | null = null;
 
+	private client: NetworkClient;
+
 	private localGame: Game;
 	private localController: LocalController;
+	private localRNG: RNG;
 
 	private remoteGame: Game;
 	private remoteController: RemoteController;
+	private remoteRNG: RNG;
 
 	private countdown = 3;
 	private countdownTimer = this.countdown;
@@ -37,16 +43,22 @@ export class MultiplayerMode implements GameMode {
 	private recoil: Recoil;
 	private dangerLevel: DangerLevel;
 
-	private state: State = State.Ready;
+	private state: State = State.Queue;
 
 	constructor() {
 		this.input = new InputManager();
-		const seed = Math.random();
-		this.localGame = new Game(new RNG(seed), DEFAULT_GAME_SETTINGS);
+
+		this.client = new NetworkClient();
+		this.client.connect();
+		this.client.joinQueue();
+
+		this.localRNG = new RNG(0);
+		this.localGame = new Game(this.localRNG, DEFAULT_GAME_SETTINGS);
 		this.localController = new LocalController(this.localGame, this.input);
 
-		this.remoteGame = new Game(new RNG(seed), DEFAULT_GAME_SETTINGS);
-		this.remoteController = new RemoteController(this.remoteGame);
+		this.remoteRNG = new RNG(0);
+		this.remoteGame = new Game(this.remoteRNG, DEFAULT_GAME_SETTINGS);
+		this.remoteController = new RemoteController(this.remoteGame, this.client);
 
 		this.layout = this.createLayout();
 		this.dangerLevel = new DangerLevel(this.localGame, this.shaker);
@@ -83,7 +95,9 @@ export class MultiplayerMode implements GameMode {
 			() => this.countdownTimer + 1,
 		);
 
-		const gameLayer = new Center(new HBox([localGame, new SizedBox(64, 0), remoteGame]));
+		const remoteGameWrapper = new Switch(() => this.state != State.Queue, remoteGame, new Label(() => "Searching opponent...", "data", "center"));
+
+		const gameLayer = new Center(new HBox([localGame, new SizedBox(64, 0), remoteGameWrapper]));
 
 		const uiLayer = this.createResultsScreen();
 
@@ -117,16 +131,27 @@ export class MultiplayerMode implements GameMode {
 		this.localGame.events.on("gameOver", () => this.finish(false));
 		this.remoteGame.events.on("gameOver", () => this.finish(true));
 
-		this.localGame.events.on("lineClear", (lines) => {
+		this.localGame.events.on("lineClear", (lines: number) => {
 			this.shaker.trigger(this.context ? this.context.shakeIntensityMultiplier * lines : 0);
 
 			if (lines < 4) this.context?.effects.playLinesCleared(lines);
 			else this.context?.effects.playTetrisCleared();
+		});
+
+		
+		this.client.events.on("matchStart", (packet: MatchStartPacket) => {
+			if (this.state == State.Queue) this.state = State.Ready;
+			this.localRNG.setSeed(packet.seed);
+			this.remoteRNG.setSeed(packet.seed);
+		});
+
+		this.localController.events.on("action", action => {
+			if (this.client) this.client.sendAction(action);
 		})
 	}
 
 	private reset() {
-		this.state = State.Ready;
+		this.state = State.Queue;
 		this.countdownTimer = 2;
 
 		this.localGame.start();
@@ -142,6 +167,7 @@ export class MultiplayerMode implements GameMode {
 	}
 
 	onExit(): void {
+		this.client.disconnect();
 	  this.context = null; 
 	}
 

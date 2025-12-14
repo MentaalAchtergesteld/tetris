@@ -98,11 +98,6 @@ function loop(time: number) {
 async function init() {
 	await document.fonts.ready;
 
-	const net = new NetworkClient();
-	net.connect();
-
-	(window as any).join = () => net.joinQueue();
-	
 	gamemode.onEnter(gameContext);
 
 	requestAnimationFrame(loop);

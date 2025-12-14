@@ -38,6 +38,10 @@ export class Room {
 		this.players.forEach(player => {
 			const opponent = this.players.find(p => p.id != player.id);
 
+			player.on("action", action => {
+				opponent?.emit("action", action);	
+			});
+
 			player.emit("match_start", {
 				seed: sharedSeed,
 				opponentId: opponent?.id
