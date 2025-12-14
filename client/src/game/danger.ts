@@ -1,5 +1,5 @@
 import { Shaker } from "../ui/widgets/effects";
-import { Game } from "./game";
+import { Game } from "@tetris/shared";
 
 export class DangerLevel {
 	private rawLevel = 0;

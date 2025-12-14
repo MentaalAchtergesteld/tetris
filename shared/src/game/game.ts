@@ -4,7 +4,7 @@ import { HoldContainer } from "../game/hold_container";
 import { PieceQueue } from "../game/piece_queue";
 import { EventEmitter } from "../engine/events";
 import { TetrominoType } from "./piece";
-import { GameAction } from "../engine/input/input_manager";
+import { GameAction } from "../game/actions";
 import { RNG } from "../engine/rng";
 
 export interface GameSettings {

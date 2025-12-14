@@ -1,5 +1,5 @@
-import { Game } from "../../game/game";
-import { GameAction, InputManager } from "./input_manager";
+import { Game, GameAction } from "@tetris/shared";
+import { InputManager } from "./input_manager";
 
 export interface ControllerSettings {
 	das: number;

@@ -1,13 +1,4 @@
-export enum GameAction {
-	MoveLeft,
-	MoveRight,
-	SoftDrop,
-	HardDrop,
-	RotateCW,
-	RotateCCW,
-	Hold,
-	Reset
-}
+import { GameAction } from "@tetris/shared";
 
 export const DEFAULT_KEYBINDS: Record<GameAction, string[]> = {
 	[GameAction.MoveLeft]:  ["ArrowLeft"],

@@ -1,4 +1,4 @@
-import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "../../game/piece";
+import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "@tetris/shared";
 import { GameTheme } from "../../theme";
 import { drawPieceCentered } from "../util";
 import { Size, Widget } from "../widget";

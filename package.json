@@ -4,14 +4,24 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsup src/index.ts --format iife --clean --minify",
-		"zip": "npm run build && rm -rf release && mkdir release && cp index.html release/ && cp -r dist release/ && zip -r Game.zip release"
+		"dev:client": "npm run dev --workspace=@tetris/client",
+		"build:shared": "npm run build --workspace=@tetris/shared",
+		"install:all": "npm install"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MentaalAchtergesteld/tetris.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "Mentaal",
   "license": "ISC",
-  "devDependencies": {
-    "tsup": "^8.5.1",
-    "typescript": "^5.9.3"
-  }
+  "bugs": {
+    "url": "https://github.com/MentaalAchtergesteld/tetris/issues"
+  },
+  "homepage": "https://github.com/MentaalAchtergesteld/tetris#readme",
+	"workspaces": [
+		"client",
+		"server",
+		"shared"
+	]
 }

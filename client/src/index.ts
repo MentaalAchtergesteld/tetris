@@ -1,6 +1,6 @@
 import "./extensions/canvas";
 import { AudioManager, EffectsManager } from "./engine/audio";
-import { DEFAULT_GAME_SETTINGS } from "./game/game";
+import { DEFAULT_GAME_SETTINGS } from "@tetris/shared";
 import { DEFAULT_CONTROLLER_SETTINGS } from "./engine/input/controller";
 import { QuickHUD, HUDPosition } from "./engine/quickhud";
 import { DEFAULT_THEME } from "./theme";

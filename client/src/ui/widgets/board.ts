@@ -1,6 +1,6 @@
 import "../../extensions/canvas";
 import { Widget, Size } from "../widget";
-import { Piece } from "../../game/piece";
+import { Piece } from "@tetris/shared";
 import { GameTheme } from "../../theme";
 import { drawPieceShape, pieceIndexToColor } from "../util";
 

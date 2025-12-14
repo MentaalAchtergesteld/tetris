@@ -1,4 +1,4 @@
-import { getPieceBounds } from "../game/piece";
+import { getPieceBounds } from "@tetris/shared";
 import { Color, GameTheme } from "../theme";
 import { Size } from "./widget";
 

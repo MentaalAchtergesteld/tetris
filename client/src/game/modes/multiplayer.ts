@@ -1,6 +1,6 @@
 import { LocalController, RemoteController } from "../../engine/input/controller";
-import { GameAction, InputManager } from "../../engine/input/input_manager";
-import { RNG } from "../../engine/rng";
+import {  InputManager } from "../../engine/input/input_manager";
+import { DEFAULT_GAME_SETTINGS, Game, GameAction, RNG } from "@tetris/shared";
 import { GameTheme } from "../../theme"
 import { Widget } from "../../ui/widget";
 import { ColorBlock } from "../../ui/widgets/color_block";
@@ -10,7 +10,6 @@ import { Center, HBox, Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
 import { Conditional } from "../../ui/widgets/logic";
 import { StandardGame } from "../../ui/widgets/standard_game";
 import { DangerLevel } from "../danger";
-import { DEFAULT_GAME_SETTINGS, Game } from "../game"
 import { GameContext, GameMode } from "../modes"
 
 enum State {

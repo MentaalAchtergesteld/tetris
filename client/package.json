@@ -1,5 +1,5 @@
 {
-  "name": "client",
+  "name": "@tetris/client",
   "version": "1.0.0",
   "description": "",
   "main": "src/index.ts",
@@ -9,8 +9,11 @@
     "preview": "vite preview"
   },
   "keywords": [],
-  "author": "",
+  "author": "Mentaal",
   "license": "ISC",
+	"dependencies": [
+		"@tetris/shared"
+	],
   "devDependencies": {
     "typescript": "^5.9.3",
     "vite": "^7.2.7"

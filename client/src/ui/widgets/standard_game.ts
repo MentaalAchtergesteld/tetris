@@ -1,5 +1,4 @@
-import { Game } from "../../game/game";
-import { Piece, TetrominoType } from "../../game/piece";
+import { Game, Piece, TetrominoType } from "@tetris/shared";
 import { GameTheme } from "../../theme";
 import { Size, Widget } from "../widget";
 import { BoardWidget } from "./board";
