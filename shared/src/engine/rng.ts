@@ -1,7 +1,9 @@
 export class RNG {
 	private state: number;
 
-	constructor(seed: number) { this.state = seed };
+	constructor(seed: number = Math.random()) { this.state = seed };
+
+	public setSeed(seed: number) { this.state = seed }
 
 	public nextFloat(): number {
 		let t = (this.state += 0x6d2b79f5);
