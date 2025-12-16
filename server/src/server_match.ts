@@ -1,7 +1,7 @@
 import { PacketType } from "@tetris/shared";
 import { Server2ClientEvents } from "@tetris/shared";
 import { Client2ServerEvents } from "@tetris/shared";
-import { Game, GameAction, RNG, EventEmitter } from "@tetris/shared";
+import { Game, GameAction, EventEmitter } from "@tetris/shared";
 import { Socket } from "socket.io";
 
 export class Player {
@@ -15,7 +15,7 @@ export class Player {
 		this.socket = socket;
 		this.id = socket.id;
 
-		this.name = `Guest_ ${this.id.substring(0, 4)}`;
+		this.name = `Guest_${this.id.substring(0, 4)}`;
 	}
 
 	public emit<T extends keyof Server2ClientEvents>(event: T, ...args: Parameters<Server2ClientEvents[T]>) {
@@ -59,8 +59,26 @@ export class ServerMatch {
 		const seed = Date.now();
 		players.forEach(p => {
 			this.players.set(p.id, p);
-			const game = new Game(new RNG(seed));
+			const game = new Game();
 			this.games.set(p.id, game);
+
+			game.setSeed(seed);
+			game.start();
+
+			p.emit(PacketType.MatchStart, {
+				seed, opponentId: players.find(o => o.id != p.id)!.id,
+			});
+
+			p.on(PacketType.Action, data => {
+				if (data.action == GameAction.SoftDrop) {
+					game.softDropFactor = data.data;
+				} else {
+					game.softDropFactor = 1;
+					game.handleInput(data.action);
+				}
+
+				this.players.forEach(o => { if (o.id != p.id) o.emit(PacketType.Action, data )});
+			});
 		});
 
 		this.setupGameEvents();
@@ -82,7 +100,7 @@ export class ServerMatch {
 		this.players.forEach(p => {
 			if (p.id != leaverId) p.emit(PacketType.MatchEnd, {
 				winnerId: p.id,
-				reason: "opponent_disconnected"
+				reason: "opponentDisconnected"
 			});
 		});
 	}
@@ -96,6 +114,8 @@ export class ServerMatch {
 		this.players.forEach(p => p.emit(PacketType.MatchEnd, { winnerId }));
 
 		this.events.emit("matchEnd", winnerId);
+
+		this.players.forEach(p => p.disconnect());
 	}
 
 	private setupGameEvents() {
@@ -154,6 +174,4 @@ export class ServerMatch {
 			this.tick();
 		}, this.tickRate);
 	}
-
-	public onPlayerAction(playerId: string, action: GameAction) {}
 }

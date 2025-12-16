@@ -27,6 +27,12 @@ export class Board {
 		this.grid = Array.from({ length: this.height }, () => Array(this.width).fill(0));
 	}
 
+	setGrid(grid: number[][]) {
+		this.grid = grid;
+		this.height = grid.length;
+		this.width = grid.reduce((max, r) => Math.max(max, r.length), 0);
+	}
+
 	isEmpty(x: number, y: number): boolean {
 		return (
 			x >= 0 && x < this.width &&

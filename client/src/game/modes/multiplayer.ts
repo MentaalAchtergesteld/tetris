@@ -1,4 +1,4 @@
-import { ActionPayload, Client2ServerEvents, Game, GarbagePayload, LobbyState, LobbyStatePayload, MatchEndPayload, MatchStartPayload, PacketType, RNG, Server2ClientEvents } from "@tetris/shared";
+import {  Client2ServerEvents, Game, LobbyState, PacketType, RNG, Server2ClientEvents } from "@tetris/shared";
 import { io, Socket } from "socket.io-client";
 import { GameContext, GameMode } from "../modes";
 import { LocalController } from "../../engine/input/controller";
@@ -18,77 +18,6 @@ import { ColorBlock } from "../../ui/widgets/color_block";
 export interface MatchStartPacket {
 	seed: number;
 	opponentId: string;
-}
-
-export interface NetworkEvents {
-	"connect": string,
-	"connectError": string,
-	"joinQueue": void,
-	"lobbyState": LobbyStatePayload,
-	"matchStart": MatchStartPayload,
-	"matchEnd": MatchEndPayload,
-	"action": ActionPayload,
-	"garbage": GarbagePayload,
-}
-
-export class NetworkClient {
-	private socket: Socket<Server2ClientEvents, Client2ServerEvents>;
-	public events: EventEmitter<NetworkEvents>;
-
-	constructor() {
-		this.socket = io("http://localhost:9000", {
-			autoConnect: false,
-		});
-
-		this.events = new EventEmitter();
-
-		this.setupEvents();
-	}
-
-	public connect() {
-		this.socket.connect();
-	}
-
-	public disconnect() {
-		this.socket.disconnect();
-	}
-
-	private setupEvents() {
-		this.socket.on("connect", () => {
-			this.events.emit("connect", this.socket.id);
-		});
-
-		this.socket.on("connect_error", (err) => {
-			this.events.emit("connectError", err.message);
-		});
-
-		this.socket.on(PacketType.LobbyState, (data) => this.events.emit("lobbyState", data));
-
-		this.socket.on(PacketType.MatchStart, (data) => {
-			this.events.emit("matchStart", data);
-		});
-
-		this.socket.on(PacketType.MatchEnd, (data) => {
-			this.events.emit("matchEnd", data);
-		});
-
-		this.socket.on(PacketType.Action, (data) => {
-			this.events.emit("action", data);
-		});
-
-		this.socket.on(PacketType.GarbageIn, (data) => {
-			this.events.emit("garbage", data);
-		});
-	}
-
-	public joinQueue() {
-		this.socket.emit(PacketType.JoinQueue);
-		this.events.emit("joinQueue", undefined);
-	}
-
-	public sendAction(action: GameAction, data: number = 0) {
-		this.socket.emit(PacketType.Action, { action, data });
-	}
 }
 
 enum GameState {
@@ -120,7 +49,7 @@ export class MultiplayerMode implements GameMode {
 	private shaker: Shaker;
 	private recoil: Recoil;
 
-	private countdownTimer: number = 2;
+	private countdownTimer: number = -1;
 	private state: GameState = GameState.JoiningQueue;
 
 	constructor() {
@@ -130,10 +59,10 @@ export class MultiplayerMode implements GameMode {
 			autoConnect: false,
 		});
 
-		this.localGame = new Game(new RNG(0));
+		this.localGame = new Game();
 		this.localController = new LocalController(this.localGame, this.input);
 
-		this.remoteGame = new Game(new RNG(0));
+		this.remoteGame = new Game();
 
 		this.layout = this.buildLayout();
 		this.dangerLevel = new DangerLevel(this.localGame, this.shaker);
@@ -149,7 +78,7 @@ export class MultiplayerMode implements GameMode {
 		this.socket.on(PacketType.LobbyState, (data) => {
 			switch (data.state) {
 				case LobbyState.WaitingForOpp: return this.state = GameState.WaitingForOpp;
-				case LobbyState.WaitingForReady: return this.state = GameState.WaitingForOpp;
+				case LobbyState.WaitingForReady: return this.state = GameState.WaitingForReady;
 			}
 		});
 
@@ -159,28 +88,51 @@ export class MultiplayerMode implements GameMode {
 
 			this.opponentId = data.opponentId;
 
+			this.remoteGame.start();
+			this.localGame.start();
 			this.state = GameState.Running;
 		});
 
-		this.client.events.on("matchEnd", (data) => {
+		this.socket.on(PacketType.MatchEnd, (data) => {
 			if (data.winnerId == this.opponentId) {
 				this.state = GameState.Gameover;
 			} else {
 				this.state = GameState.Finished;
 			}
+
+			this.isReady = false;
 		});
 
-		this.client.events.on("garbage", (data) => {
+		this.socket.on(PacketType.GarbageIn, (data) => {
 			this.localGame.addGarbage(data.amount);
 		});
 
-		this.client.events.on("action", (data) => {
+		this.socket.on(PacketType.Action, (data) => {
 			if (data.action == GameAction.SoftDrop) {
 				this.remoteGame.softDropFactor = data.data;
 			} else {
 				this.remoteGame.handleInput(data.action);
 				this.remoteGame.softDropFactor = 1;
 			}
+		});
+
+		this.socket.on(PacketType.OppState, ({ grid, currentPiece }) => {
+			this.remoteGame.setGrid(grid);
+			const gameCurrentPiece = this.remoteGame.getCurrentPiece();
+
+			if (gameCurrentPiece == null || currentPiece == null) return;
+
+			if (
+				currentPiece.rotation != gameCurrentPiece.rotation ||
+				Math.abs(currentPiece.x - gameCurrentPiece.x) > 3 ||
+				Math.abs(currentPiece.y - gameCurrentPiece.y) > 3
+			) {
+				this.remoteGame.currentPiece = currentPiece;
+			}
+		});
+
+		this.localController.events.on("action", action => {
+			this.socket.emit(PacketType.Action, { action, data: this.localController.settings.sdf })
 		});
 	}
 
@@ -197,18 +149,18 @@ export class MultiplayerMode implements GameMode {
 		const remoteGame = this.buildGameLayout(this.remoteGame, false)
 		const gameLayout = new HBox([localGame, remoteGame], 64);
 
-		const lobbyLayout = new Overlay([
+		const lobbyLayout = new Center(new Overlay([
 			new Conditional(() => this.state == GameState.JoiningQueue,    new Label(() => "joining queue")),
 			new Conditional(() => this.state == GameState.Queue,           new Label(() => "in queue")),
 			new Conditional(() => this.state == GameState.WaitingForOpp,   new Label(() => "waiting for opponent")),
 			new Conditional(() => this.state == GameState.WaitingForReady, new VBox([
 				new Label(() => "not everyone is ready"),
 				new Switch(() => this.isReady,
-					new Label(() => "press <space> to ready up", "data"),
 					new Label(() => "waiting for everyone to be ready", "data"),
+					new Label(() => "press <space> to ready up", "data"),
 				),
 			])),
-		]);
+		]));
 
 		const lobbyOrGameLayout = new Switch(() => (
 			this.state == GameState.JoiningQueue ||
@@ -246,10 +198,26 @@ export class MultiplayerMode implements GameMode {
 
 	onExit(): void {
 	  this.context = null; 
+		this.socket.disconnect();
 	}
 
 	update(dt: number): void {
-		this.input.update();  
+		this.input.update();
+		this.shaker.update(dt);
+		this.recoil.update(dt);
+
+		if (this.state == GameState.WaitingForReady && this.input.isJustPressed(GameAction.HardDrop) && !this.isReady) {
+			this.isReady = true;
+			this.socket.emit(PacketType.Ready);
+		};
+		if (this.state != GameState.Running) return;
+
+		this.dangerLevel.update(dt);
+
+		this.localController.update(dt);
+		this.localGame.update(dt);
+
+		this.remoteGame.update(dt);
 	}
 
 	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {

@@ -1,3 +1,4 @@
+import { LobbyState, PacketType, Server2ClientEvents } from "@tetris/shared";
 import { Player, ServerMatch } from "./server_match.js";
 
 export class Room {
@@ -12,13 +13,17 @@ export class Room {
 		this.id = id;
 	}
 
+	private broadcastToPlayers<T extends keyof Server2ClientEvents>(event: T, ...args: Parameters<Server2ClientEvents[T]>) {
+		this.players.forEach(p => p.emit(event, ...args));
+	}
+
 	private handleMatchEnd(winnerId: string) {
 		console.log(`Match finished. Winner: ${winnerId}`);
 		this.currentMatch = null;
 
 		this.players.forEach(p => {
 			p.isReady = false;
-			p.emit("lobby_state", { status: "waiting"} );
+			p.emit(PacketType.LobbyState, { state: LobbyState.WaitingForReady });
 		});
 
 		this.isOpen = true;
@@ -32,20 +37,27 @@ export class Room {
 		this.currentMatch.events.on("matchEnd", (winnerId: string) => this.handleMatchEnd(winnerId));
 	}
 
-	private checkReadyStatus() {
+	private checkLobbyState() {
+		if (this.players.length < 2) {
+			this.broadcastToPlayers(PacketType.LobbyState, { state: LobbyState.WaitingForOpp });
+			return;
+		}
+
 		const allReady = this.players.every(p => p.isReady);
-		if (allReady && this.players.length >= 2) this.startGame();
+
+		if (allReady) this.startGame();
+		else this.broadcastToPlayers(PacketType.LobbyState, { state: LobbyState.WaitingForReady });
 	}
 
 	public addPlayer(player: Player) {
 		this.players.push(player);
 
-		player.on("action", (packet) => {
-			if (!this.currentMatch) return;
-			this.currentMatch.onPlayerAction(player.id, packet);
+		this.checkLobbyState();
+		player.on(PacketType.Ready, () => {
+			player.isReady = true;
+			console.log(`${player.name} is ready!`);
+			this.checkLobbyState()
 		});
-
-		player.on("ready", () => this.checkReadyStatus());
 	}
 
 	public removePlayer(playerId: string) {
@@ -58,7 +70,7 @@ export class Room {
 		}
 
 		if (this.players.length > 0) {
-			this.players[0].emit("lobby_state", { status: "waiting_for_opponent" } );
+			this.players[0].emit(PacketType.LobbyState, { state: LobbyState.WaitingForOpp } );
 			this.players[0].isReady = false;
 			this.isOpen = true;
 		}

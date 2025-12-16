@@ -64,10 +64,10 @@ export class Game {
 
 	public isGameOver: boolean = false;
 
-	constructor(rng: RNG, settings: GameSettings = DEFAULT_GAME_SETTINGS) {
+	constructor(seed: number = 0, settings: GameSettings = DEFAULT_GAME_SETTINGS) {
 		this.settings = settings
 
-		this.rng = rng;
+		this.rng = new RNG(seed);
 		this.events = new EventEmitter<GameEvents>();
 
 		this.boardRNG = new RNG(this.rng.nextFloatRange(0, 1000));
@@ -88,6 +88,7 @@ export class Game {
 		this.queueRNG.setSeed(this.rng.nextFloatRange(0, 1000));
 	}
 	public getGrid(): number[][] { return this.board.grid }
+	public setGrid(grid: number[][]) { this.board.setGrid(grid) };
 	public getDimensions(): { width: number, height: number } {
 		return { width: this.board.width, height: this.board.height }
 	}

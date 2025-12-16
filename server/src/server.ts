@@ -11,7 +11,7 @@ app.use(cors());
 
 const httpServer = createServer(app);
 const io = new Server<Client2ServerEvents, Server2ClientEvents>(httpServer, {
-	cors: { origin: "*", methods: ["GET", "POST"] }
+	cors: { origin: "*", methods: ["GET", "POST"], credentials: true }
 });
 
 const PORT = 9000;

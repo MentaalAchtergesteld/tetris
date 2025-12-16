@@ -23,7 +23,7 @@ export interface ActionPayload {
 
 export interface StatePayload {
 	grid: number[][],
-	currentPiece: Piece
+	currentPiece: Piece | null,
 }
 
 export interface GarbagePayload {
