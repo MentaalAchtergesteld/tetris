@@ -42,8 +42,11 @@ export interface GameEvents {
 }
 
 export class Game {
-	public readonly rng: RNG;
 	public readonly events: EventEmitter<GameEvents>;
+
+	private rng: RNG;
+	private boardRNG: RNG;
+	private queueRNG: RNG;
 
 	public currentPiece: Piece | null = null;
 
@@ -67,15 +70,23 @@ export class Game {
 		this.rng = rng;
 		this.events = new EventEmitter<GameEvents>();
 
-		this.board = new Board(rng, this.settings.boardWidth, this.settings.boardHeight);
+		this.boardRNG = new RNG(this.rng.nextFloatRange(0, 1000));
+		this.board = new Board(this.boardRNG, this.settings.boardWidth, this.settings.boardHeight);
 		this.hold = new HoldContainer();
-		this.queue = new PieceQueue(rng);
+
+		this.queueRNG = new RNG(this.rng.nextFloatRange(0, 1000));
+		this.queue = new PieceQueue(this.queueRNG);
 
 		this.board.reset();
 		this.queue.reset();
 		this.hold.reset();
 	}
 
+	public setSeed(seed: number) {
+		this.rng.setSeed(seed);
+		this.boardRNG.setSeed(this.rng.nextFloatRange(0, 1000));
+		this.queueRNG.setSeed(this.rng.nextFloatRange(0, 1000));
+	}
 	public getGrid(): number[][] { return this.board.grid }
 	public getDimensions(): { width: number, height: number } {
 		return { width: this.board.width, height: this.board.height }

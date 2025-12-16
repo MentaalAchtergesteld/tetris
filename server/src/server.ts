@@ -4,12 +4,13 @@ import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { Room } from "./room.js";
 import { Player } from "./server_match.js";
+import { Client2ServerEvents, PacketType, Server2ClientEvents } from "@tetris/shared";
 
 const app = express();
 app.use(cors());
 
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
+const io = new Server<Client2ServerEvents, Server2ClientEvents>(httpServer, {
 	cors: { origin: "*", methods: ["GET", "POST"] }
 });
 
@@ -21,9 +22,8 @@ io.on("connection", (socket: Socket) => {
 	const player = new Player(socket);
 	console.log(`New connection: ${player.id} (${player.name})`);
 
-	socket.on("join_queue", () => {
+	socket.on(PacketType.JoinQueue, () => {
 		console.log(`${player.id} is searching for a match...`);
-
 		let room = rooms.find(r => r.isOpen);
 		if (room) {
 			console.log(`Match found! Joining room ${room.id}.`);

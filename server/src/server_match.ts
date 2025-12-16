@@ -1,3 +1,6 @@
+import { PacketType } from "@tetris/shared";
+import { Server2ClientEvents } from "@tetris/shared";
+import { Client2ServerEvents } from "@tetris/shared";
 import { Game, GameAction, RNG, EventEmitter } from "@tetris/shared";
 import { Socket } from "socket.io";
 
@@ -8,19 +11,23 @@ export class Player {
 
 	public isReady: boolean = false;
 
-	constructor(socket: Socket) {
+	constructor(socket: Socket<Client2ServerEvents,Server2ClientEvents>) {
 		this.socket = socket;
 		this.id = socket.id;
 
 		this.name = `Guest_ ${this.id.substring(0, 4)}`;
 	}
 
-	public emit(event: string, data?: any) {
-		this.socket.emit(event, data);
+	public emit<T extends keyof Server2ClientEvents>(event: T, ...args: Parameters<Server2ClientEvents[T]>) {
+		this.socket.emit(event, ...args);
 	}
 
-	public on(event: string, callback: (data: any) => void) {
-		this.socket.on(event, callback);
+	public on<T extends keyof Client2ServerEvents>(event: T, callback: Client2ServerEvents[T]) {
+		this.socket.on(event, callback as any);
+	}
+	
+	public off<T extends keyof Client2ServerEvents>(event: T, callback: Client2ServerEvents[T]) {
+		this.socket.off(event, callback as any);
 	}
 
 	public disconnect() {
@@ -73,8 +80,8 @@ export class ServerMatch {
 		if (this.loopId) clearInterval(this.loopId);
 
 		this.players.forEach(p => {
-			if (p.id != leaverId) p.emit("match_end", {
-				winner: true,
+			if (p.id != leaverId) p.emit(PacketType.MatchEnd, {
+				winnerId: p.id,
 				reason: "opponent_disconnected"
 			});
 		});
@@ -86,7 +93,7 @@ export class ServerMatch {
 		let winnerId = "";
 		this.players.forEach((_, id) => { if (id != loserId) winnerId = id });
 
-		this.players.forEach(p => p.emit("match_end",{ winner: p.id == winnerId }));
+		this.players.forEach(p => p.emit(PacketType.MatchEnd, { winnerId }));
 
 		this.events.emit("matchEnd", winnerId);
 	}
@@ -96,15 +103,15 @@ export class ServerMatch {
 			const player = this.players.get(playerId);
 
 			game.events.on("lineClear", (lines: number) => {
-				const garbageAmount = this.calculateGarbage(lines);
-				if (garbageAmount == 0) return;
+				const amount = this.calculateGarbage(lines);
+				if (amount == 0) return;
 
 				this.games.forEach((oppGame, oppId) => {
 					if (oppId == playerId) return;
-					oppGame.addGarbage(garbageAmount);
+					oppGame.addGarbage(amount);
 					const oppPlayer = this.players.get(oppId);
-					oppPlayer?.emit("garbage_received", garbageAmount);
-					player?.emit("garbage_sent", garbageAmount);
+					oppPlayer?.emit(PacketType.GarbageIn, { amount });
+					player?.emit(PacketType.GarbageOut, { amount });
 				});
 			});
 
@@ -118,16 +125,16 @@ export class ServerMatch {
 		this.players.forEach((player, id) => {
 			const game = this.games.get(id)!;
 
-			player.emit("self_state", {
+			player.emit(PacketType.SelfState, {
 				grid: game.getGrid(),
-				piece: game.getCurrentPiece(),
+				currentPiece: game.getCurrentPiece(),
 			})
 
 			this.games.forEach((otherGame, otherId) => {
 				if (otherId == id) return;
-				player.emit("opponent_state", {
+				player.emit(PacketType.OppState, {
 					grid: otherGame.getGrid(),
-					piece: otherGame.getCurrentPiece(),
+					currentPiece: otherGame.getCurrentPiece(),
 				});
 			});
 		});
