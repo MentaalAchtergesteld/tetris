@@ -2,75 +2,86 @@ import { GameAction } from "../game/actions";
 import { Piece } from "../game/piece";
 
 export enum PacketType {
-	JoinQueue = "c2sJoinQueue",
-	Ready = "c2sReady",
-	Action = "c2sAction",
+	JoinQueue    = "joinQueue",
+	JoinRoom     = "joinRoom",
+	PlayerJoined = "PlayerJoined",
+	Seed         = "seed",
+	Ready        = "ready",
+	StartMatch   = "startMatch",
+	Action       = "action",
+	SelfState    = "selfState",
+	OppState     = "oppState",
+	GarbageIn    = "garbageIn",
+	GarbageOut   = "garbageOut",
+	EndMatch     = "endMatch",
+	FinishMatch  = "finishMatch",
+	LeaveRoom    = "leaveRoom,",
 
-	MatchStart = "s2cMatchStart",
-	MatchEnd = "s2cMatchEnd",
-	SelfState = "s2cSelfState",
-	OppState = "s2cOppState",
-	GarbageIn = "s2cGarbageIn",
-	GarbageOut = "s2cGarbageOut",
-	Seed = "s2cSeed",
-	LobbyState = "s2cLobbyState",
+	// FUTURE
+	ChatMessage = "chatMessage"
 }
 
-export interface ActionPayload {
+export interface ActionPayload {
 	action: GameAction,
 	data: number,
 }
 
 export interface StatePayload {
+	id: string,
 	grid: number[][],
 	currentPiece: Piece | null,
 }
 
-export interface GarbagePayload {
-	amount: number,
-}
-
-export interface MatchStartPayload {
-	seed: number,
-	opponentId: string,
-}
-
-export interface MatchEndPayload {
-	winnerId: string,
-	reason?: string,
+export interface PlayerJoinedPayload {
+	playerId: string,
 }
 
 export interface SeedPayload {
-	seed: number;
+	seed: number,
 }
 
-export enum LobbyState {
-	WaitingForOpp,
-	WaitingForReady
+export interface GarbagePayload {
+	amount: number,
+	receiverId: string,
+	senderId: string,
 }
 
-export interface LobbyStatePayload {
-	state: LobbyState
+export interface EndMatchPayload {
+	winnerId: string,
 }
 
-export interface Client2ServerEvents {
-	[PacketType.JoinQueue]: () => void;
-	[PacketType.Ready]: () => void;
-	[PacketType.Action]: (data: ActionPayload) => void;
+export interface FinishMatchPayload {
+	winnerId: string,
+	selfPoints: number,
+	opponentPoints: Map<string, number>,
 }
 
-export interface Server2ClientEvents {
-	[PacketType.Action]: (data: ActionPayload) => void;
-
-	[PacketType.MatchStart]: (data: MatchStartPayload) => void;
-	[PacketType.MatchEnd]: (data: MatchEndPayload) => void;
-	
-	[PacketType.SelfState]: (data: StatePayload) => void;
-	[PacketType.OppState]: (data: StatePayload) => void;
-
-	[PacketType.GarbageIn]: (data: GarbagePayload) => void;
-	[PacketType.GarbageOut]: (data: GarbagePayload) => void;
-
-	[PacketType.Seed]: (data: SeedPayload) => void;
-	[PacketType.LobbyState]: (data: LobbyStatePayload) => void;
+type C2SPayloads = {
+	[PacketType.JoinQueue]: null;
+	[PacketType.Ready]: null,
+	[PacketType.Action]: ActionPayload,
+	[PacketType.LeaveRoom]: null,
 }
+
+type S2CPayloads = {
+	[PacketType.JoinRoom]: null;
+	[PacketType.PlayerJoined]: PlayerJoinedPayload;
+	[PacketType.Seed]: SeedPayload,
+	[PacketType.StartMatch]: null,
+	[PacketType.Action]: ActionPayload,
+	[PacketType.SelfState]: StatePayload,
+	[PacketType.OppState]: StatePayload,
+	[PacketType.GarbageIn]: GarbagePayload,
+	[PacketType.GarbageOut]: GarbagePayload,
+	[PacketType.EndMatch]: EndMatchPayload,
+	[PacketType.FinishMatch]: FinishMatchPayload,
+}
+
+type AsSocketEvents<T> = {
+	[K in keyof T]: T[K] extends void
+		? () => void
+		: (data: T[K]) => void;
+};
+
+export type C2SEvents = AsSocketEvents<C2SPayloads>; 
+export type S2CEvents = AsSocketEvents<S2CPayloads>; 

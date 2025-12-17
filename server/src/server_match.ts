@@ -1,6 +1,4 @@
-import { PacketType } from "@tetris/shared";
-import { Server2ClientEvents } from "@tetris/shared";
-import { Client2ServerEvents } from "@tetris/shared";
+import { C2SEvents, PacketType, S2CEvents } from "@tetris/shared";
 import { Game, GameAction, EventEmitter } from "@tetris/shared";
 import { Socket } from "socket.io";
 
@@ -11,22 +9,26 @@ export class Player {
 
 	public isReady: boolean = false;
 
-	constructor(socket: Socket<Client2ServerEvents,Server2ClientEvents>) {
+	constructor(socket: Socket<C2SEvents, S2CEvents>) {
 		this.socket = socket;
 		this.id = socket.id;
 
 		this.name = `Guest_${this.id.substring(0, 4)}`;
 	}
 
-	public emit<T extends keyof Server2ClientEvents>(event: T, ...args: Parameters<Server2ClientEvents[T]>) {
+	public emit<T extends keyof S2CEvents>(event: T, ...args: Parameters<S2CEvents[T]>) {
 		this.socket.emit(event, ...args);
 	}
 
-	public on<T extends keyof Client2ServerEvents>(event: T, callback: Client2ServerEvents[T]) {
+	public on<T extends keyof C2SEvents>(event: T, callback: C2SEvents[T]) {
 		this.socket.on(event, callback as any);
 	}
-	
-	public off<T extends keyof Client2ServerEvents>(event: T, callback: Client2ServerEvents[T]) {
+
+	public once<T extends keyof C2SEvents>(event: T, callback: C2SEvents[T]) {
+		this.socket.once(event, callback as any);
+	}
+
+	public off<T extends keyof C2SEvents>(event: T, callback: C2SEvents[T]) {
 		this.socket.off(event, callback as any);
 	}
 
@@ -53,125 +55,102 @@ export class ServerMatch {
 	constructor(players: Player[]) {
 		this.games = new Map();
 		this.players = new Map();
-
 		this.events = new EventEmitter();
 
-		const seed = Date.now();
-		players.forEach(p => {
-			this.players.set(p.id, p);
-			const game = new Game();
-			this.games.set(p.id, game);
-
-			game.setSeed(seed);
-			game.start();
-
-			p.emit(PacketType.MatchStart, {
-				seed, opponentId: players.find(o => o.id != p.id)!.id,
-			});
-
-			p.on(PacketType.Action, data => {
-				if (data.action == GameAction.SoftDrop) {
-					game.softDropFactor = data.data;
-				} else {
-					game.softDropFactor = 1;
-					game.handleInput(data.action);
-				}
-
-				this.players.forEach(o => { if (o.id != p.id) o.emit(PacketType.Action, data )});
-			});
-		});
-
-		this.setupGameEvents();
-		this.startLoop();
+		players.forEach((p) => this.addPlayer(p));
 	}
 
-	private calculateGarbage(lines: number) { 
-		switch(lines) {
+	private checkAllReady() {
+		const allReady = Array.from(this.players.values()).every(p => p.isReady);
+		if (allReady) this.startMatch();
+	}
+
+	private onPlayerAction(id: string, action: GameAction, data: number) {
+		const game = this.games.get(id);
+		if (!game) return;
+		
+		if (action == GameAction.SoftDrop) {
+			game.softDropFactor = data;
+		} else {
+			game.softDropFactor = 1;
+			game.handleInput(action);
+		}
+
+		this.players.forEach(p => { if (p.id != id) p.emit(PacketType.Action, { action, data }) });
+	}
+
+	private calculateGarbage(linesCleared: number): number {
+		switch (linesCleared) {
 			case 2: return 1;
 			case 3: return 2;
 			case 4: return 4;
-			default: return 0;
+			default: return 0; 
 		}
 	}
 
-	public forceEnd(leaverId: string) {
-		if (this.loopId) clearInterval(this.loopId);
+	private onLineClear(id: string, count: number) {
+		const garbage = this.calculateGarbage(count);
+		if (garbage <= 0) return;
+
+		const player = this.players.get(id);
 
 		this.players.forEach(p => {
-			if (p.id != leaverId) p.emit(PacketType.MatchEnd, {
-				winnerId: p.id,
-				reason: "opponentDisconnected"
-			});
+			if (p.id == id) return;
+
+			const packet = {
+				receiverId: p.id,
+				senderId: id,
+				amount: garbage,
+			};
+			if (player) player.emit(PacketType.GarbageOut, packet);
+			p.emit(PacketType.GarbageIn, packet);
 		});
 	}
 
-	private endMatch(loserId: string) {
-		if (this.loopId) clearInterval(this.loopId);
+	private onGameOver(id: string) {
+		const winnerId = Array.from(this.players.values()).find(p => p.id != id)!.id;
+		this.stopMatch(winnerId);
+		this.players.forEach(p => p.emit(PacketType.EndMatch, { winnerId }));
+	}
 
-		let winnerId = "";
-		this.players.forEach((_, id) => { if (id != loserId) winnerId = id });
+	private addPlayer(player: Player) {
+		const game = new Game();
+		this.games.set(player.id, game);
+		this.players.set(player.id, player);
 
-		this.players.forEach(p => p.emit(PacketType.MatchEnd, { winnerId }));
+		game.events.on("lineClear", (count) => this.onLineClear(player.id, count));
+		game.events.on("gameOver",  () => this.onGameOver(player.id));
 
+		player.on(PacketType.Ready,  () => { player.isReady = true; this.checkAllReady() });
+		player.on(PacketType.Action, ({ action, data }) => this.onPlayerAction(player.id, action, data));
+	}
+
+	private stopMatch(winnerId: string) {
 		this.events.emit("matchEnd", winnerId);
 
-		this.players.forEach(p => p.disconnect());
+		if (this.loopId) clearInterval(this.loopId);
 	}
 
-	private setupGameEvents() {
-		this.games.forEach((game, playerId) => {
-			const player = this.players.get(playerId);
-
-			game.events.on("lineClear", (lines: number) => {
-				const amount = this.calculateGarbage(lines);
-				if (amount == 0) return;
-
-				this.games.forEach((oppGame, oppId) => {
-					if (oppId == playerId) return;
-					oppGame.addGarbage(amount);
-					const oppPlayer = this.players.get(oppId);
-					oppPlayer?.emit(PacketType.GarbageIn, { amount });
-					player?.emit(PacketType.GarbageOut, { amount });
-				});
-			});
-
-			game.events.on("gameOver", () => {
-				this.endMatch(playerId);
-			});
-		});
+	private startMatch() {
+		this.games.forEach(g => g.start());
+		this.loopId = setInterval(this.loop, this.tickRate);
 	}
 
-	private broadcastState() {
-		this.players.forEach((player, id) => {
-			const game = this.games.get(id)!;
+	private loop() {
+		this.games.forEach((game, id) => {
+			game.update(this.tickRate);
+			const player = this.players.get(id);
+			
+			if (this.ticksCount % 5 != 0) return;
 
-			player.emit(PacketType.SelfState, {
+			const state = {
+				id,
 				grid: game.getGrid(),
 				currentPiece: game.getCurrentPiece(),
-			})
+			};
 
-			this.games.forEach((otherGame, otherId) => {
-				if (otherId == id) return;
-				player.emit(PacketType.OppState, {
-					grid: otherGame.getGrid(),
-					currentPiece: otherGame.getCurrentPiece(),
-				});
-			});
+			player?.emit(PacketType.SelfState, state);
+			this.players.forEach(p => { if (p.id != id) p.emit(PacketType.OppState, state) });
 		});
-	}
-
-	private tick() {
-		this.games.forEach((game) => {
-			game.update(this.tickRate/1000);
-		});
-
-		if (this.ticksCount % 5 == 0) this.broadcastState();
-		this.ticksCount++;
-	}
-
-	private startLoop() {
-		this.loopId = setInterval(() => {
-			this.tick();
-		}, this.tickRate);
 	}
 }

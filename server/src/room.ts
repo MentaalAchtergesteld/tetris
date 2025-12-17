@@ -1,81 +1,84 @@
-import { LobbyState, PacketType, Server2ClientEvents } from "@tetris/shared";
+import { PacketType } from "@tetris/shared";
 import { Player, ServerMatch } from "./server_match.js";
 
 export class Room {
 	public id: string;
 	private players: Player[] = [];
+	private points: Map<string, number>;
 
 	private currentMatch: ServerMatch | null = null;
 
-	public isOpen: boolean = true;
-
-	constructor(id: string) {
-		this.id = id;
+	constructor() {
+		this.id = `room_${Date.now().toFixed(4)}`;
+		this.points = new Map();
 	}
 
-	private broadcastToPlayers<T extends keyof Server2ClientEvents>(event: T, ...args: Parameters<Server2ClientEvents[T]>) {
-		this.players.forEach(p => p.emit(event, ...args));
+	public isOpen(): boolean {
+		return this.currentMatch != null || this.players.length >= 2;
 	}
 
-	private handleMatchEnd(winnerId: string) {
-		console.log(`Match finished. Winner: ${winnerId}`);
+	public isEmpty(): boolean {
+		return this.players.length == 0;
+	}
+
+	public addPlayer(player: Player): boolean {
+		if (!this.isOpen()) return false;
+		if (this.players.includes(player)) return true;
+
+		this.players.forEach(p => p.emit(PacketType.PlayerJoined, { playerId: player.id }));
+
+		this.players.push(player);
+		this.points.set(player.id, 0);
+		player.emit(PacketType.JoinRoom, null);
+
+		this.checkRoomState();
+
+		return true;
+	}
+
+	private onMatchEnd(winnerId: string) {
 		this.currentMatch = null;
 
+		const currentWinnerPoints = this.points.get(winnerId) || 0;
+		this.points.set(winnerId, currentWinnerPoints+1);
+
+		const pointsEntries = Array.from(this.points.entries());
+		const { id, maxPoints} = pointsEntries.reduce(
+			(acc, [id, points]) => {
+				if (points > acc.maxPoints) {
+					return { id, maxPoints: points };
+				} else {
+					return acc;
+				}
+			},
+			{ id: "", maxPoints: 0}
+		);
+
+		if (maxPoints < 3) { this.checkRoomState(); return };
+
 		this.players.forEach(p => {
-			p.isReady = false;
-			p.emit(PacketType.LobbyState, { state: LobbyState.WaitingForReady });
-		});
+			const points = this.points.get(p.id) || 0;
+			const opponentPoints = new Map(pointsEntries.filter(([id, _]) => id != p.id));
 
-		this.isOpen = true;
+			const packet = {
+				winnerId: id,
+				selfPoints: points,
+				opponentPoints
+			};
+
+			p.emit(PacketType.FinishMatch, packet);
+
+			p.once(PacketType.LeaveRoom, () => this.players = this.players.filter((_p) => _p.id != p.id));
+		});
 	}
 
-	private startGame() {
-		console.log(`Starting match in Room ${this.id}`);
+	private startMatch() {
 		this.currentMatch = new ServerMatch(this.players);
-		this.isOpen = false;
-
-		this.currentMatch.events.on("matchEnd", (winnerId: string) => this.handleMatchEnd(winnerId));
+		this.currentMatch.events.once("matchEnd", (winnerId) => this.onMatchEnd(winnerId));
 	}
 
-	private checkLobbyState() {
-		if (this.players.length < 2) {
-			this.broadcastToPlayers(PacketType.LobbyState, { state: LobbyState.WaitingForOpp });
-			return;
-		}
-
-		const allReady = this.players.every(p => p.isReady);
-
-		if (allReady) this.startGame();
-		else this.broadcastToPlayers(PacketType.LobbyState, { state: LobbyState.WaitingForReady });
+	private checkRoomState() {
+		if (this.players.length < 2) return;
+		this.startMatch();
 	}
-
-	public addPlayer(player: Player) {
-		this.players.push(player);
-
-		this.checkLobbyState();
-		player.on(PacketType.Ready, () => {
-			player.isReady = true;
-			console.log(`${player.name} is ready!`);
-			this.checkLobbyState()
-		});
-	}
-
-	public removePlayer(playerId: string) {
-		this.players = this.players.filter(p => p.id != playerId);
-
-		if (this.currentMatch) {
-			console.log(`Player ${playerId} has left during a match.`);
-			this.currentMatch.forceEnd(playerId);
-			this.currentMatch = null;
-		}
-
-		if (this.players.length > 0) {
-			this.players[0].emit(PacketType.LobbyState, { state: LobbyState.WaitingForOpp } );
-			this.players[0].isReady = false;
-			this.isOpen = true;
-		}
-	}
-
-	public hasPlayer(id: string) { return this.players.find(p => p.id == id) != null }
-	public isEmpty() { return this.players.length == 0; }
 }
