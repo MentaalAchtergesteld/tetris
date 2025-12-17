@@ -4,7 +4,7 @@ import { Piece } from "../game/piece";
 export enum PacketType {
 	JoinQueue    = "joinQueue",
 	JoinRoom     = "joinRoom",
-	PlayerJoined = "PlayerJoined",
+	PlayerJoined = "playerJoined",
 	Seed         = "seed",
 	Ready        = "ready",
 	StartMatch   = "startMatch",

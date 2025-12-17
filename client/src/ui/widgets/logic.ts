@@ -23,24 +23,24 @@ export class Conditional extends Widget {
 }
 
 export class Switch extends Widget {
-	condition: () => boolean;
-	childFalse: Widget;
-	childTrue: Widget;
+	condition: () => number;
+	children: Widget[];
 
-	constructor(condition: () => boolean, childTrue: Widget, childFalse: Widget) {
+	constructor(condition: () => number, children: Widget[]) {
 		super();
 		this.condition = condition;
-		this.childFalse = childFalse;
-		this.childTrue = childTrue;
+		this.children = children;
+	}
+
+	getActiveChild(): Widget{
+		return this.children[this.condition() % this.children.length];
 	}
 
 	getMinSize(theme: GameTheme): Size {
-		if (this.condition()) return this.childTrue.getMinSize(theme);
-		else return this.childFalse.getMinSize(theme);
+		return this.getActiveChild().getMinSize(theme);
 	}
 
 	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		if (this.condition()) this.childTrue.draw(ctx, x, y, w, h, theme);
-		else this.childFalse.draw(ctx, x, y, w, h, theme);
+		this.getActiveChild().draw(ctx, x, y, w, h, theme);
 	}
 }

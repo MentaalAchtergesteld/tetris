@@ -3,7 +3,7 @@ import { GameContext, GameMode } from "../modes";
 import { Widget } from "../../ui/widget";
 import { Recoil, Shaker } from "../../ui/widgets/effects";
 import { DangerLevel } from "../danger";
-import { RNG, GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/shared";
+import { GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/shared";
 import { InputManager } from "../../engine/input/input_manager";
 import { GameTimer } from "../timer";
 import { GameTheme } from "../../theme";
@@ -37,7 +37,7 @@ export abstract class LocalMode implements GameMode {
 	protected countdownTimer = 2;
 
 	constructor(timerDirection: "up" | "down", timeLimit: number = 0) {
-		this.game = new Game(new RNG(Math.random()), DEFAULT_GAME_SETTINGS);
+		this.game = new Game(Math.random(), DEFAULT_GAME_SETTINGS);
 		this.input = new InputManager();
 		this.controller = new LocalController(this.game, this.input, DEFAULT_CONTROLLER_SETTINGS);
 		this.timer = new GameTimer(timerDirection, timeLimit);
