@@ -14,16 +14,20 @@ export class Room {
 	}
 
 	public isOpen(): boolean {
-		return this.currentMatch != null || this.players.length >= 2;
+		return this.currentMatch == null && this.players.length < 2;
 	}
 
 	public isEmpty(): boolean {
 		return this.players.length == 0;
 	}
 
+	public hasPlayer(id: string): boolean {
+		return this.players.some(p => p.id == id);
+	}
+
 	public addPlayer(player: Player): boolean {
 		if (!this.isOpen()) return false;
-		if (this.players.includes(player)) return true;
+		if (this.hasPlayer(player.id)) return true;
 
 		this.players.forEach(p => p.emit(PacketType.PlayerJoined, { playerId: player.id }));
 
@@ -31,9 +35,19 @@ export class Room {
 		this.points.set(player.id, 0);
 		player.emit(PacketType.JoinRoom, null);
 
+		console.log(`${player.name} has joined room ${this.id}.`);
+
 		this.checkRoomState();
 
 		return true;
+	}
+
+	public removePlayer(id: string) {
+		const player = this.players.find(p => p.id == id);
+		if (!player) return;
+		this.players = this.players.filter(p => p.id);
+		this.players.forEach(p => p.emit(PacketType.PlayerLeft, { playerId: id }));
+		console.log(`${player.name} has left room ${this.id}.`);
 	}
 
 	private onMatchEnd(winnerId: string) {
@@ -73,6 +87,7 @@ export class Room {
 	}
 
 	private startMatch() {
+		console.log(`room ${this.id} filled, starting match.`);
 		this.currentMatch = new ServerMatch(this.players);
 		this.currentMatch.events.once("matchEnd", (winnerId) => this.onMatchEnd(winnerId));
 	}

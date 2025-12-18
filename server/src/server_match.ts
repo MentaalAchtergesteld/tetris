@@ -45,6 +45,7 @@ export class ServerMatch {
 	private games: Map<string, Game>;
 	private players: Map<string, Player>;
 	private tickRate = 1000 / 60;
+	private seed: number;
 
 	private loopId: NodeJS.Timeout | null = null;;
 
@@ -56,6 +57,7 @@ export class ServerMatch {
 		this.games = new Map();
 		this.players = new Map();
 		this.events = new EventEmitter();
+		this.seed = Date.now();
 
 		players.forEach((p) => this.addPlayer(p));
 	}
@@ -115,6 +117,7 @@ export class ServerMatch {
 
 	private addPlayer(player: Player) {
 		const game = new Game();
+		game.setSeed(this.seed);
 		this.games.set(player.id, game);
 		this.players.set(player.id, player);
 
@@ -123,6 +126,8 @@ export class ServerMatch {
 
 		player.on(PacketType.Ready,  () => { player.isReady = true; this.checkAllReady() });
 		player.on(PacketType.Action, ({ action, data }) => this.onPlayerAction(player.id, action, data));
+
+		player.emit(PacketType.Seed, { seed: this.seed });
 	}
 
 	private stopMatch(winnerId: string) {
@@ -131,14 +136,23 @@ export class ServerMatch {
 		if (this.loopId) clearInterval(this.loopId);
 	}
 
+	private lastTickTime: number = 0;
+
 	private startMatch() {
 		this.games.forEach(g => g.start());
-		this.loopId = setInterval(this.loop, this.tickRate);
+		this.players.forEach(p => p.emit(PacketType.StartMatch, null));
+		this.loopId = setInterval(() => this.loop(), this.tickRate);
 	}
 
 	private loop() {
+		const now = Date.now();
+		let dt = (now - this.lastTickTime) / 1000;
+		this.lastTickTime = now;
+
+		if (dt > 0.1) dt = 0.1;
+
 		this.games.forEach((game, id) => {
-			game.update(this.tickRate);
+			game.update(dt);
 			const player = this.players.get(id);
 			
 			if (this.ticksCount % 5 != 0) return;

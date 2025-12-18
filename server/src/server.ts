@@ -4,28 +4,37 @@ import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { Room } from "./room.js";
 import { Player } from "./server_match.js";
-import { C2SEvents, S2CEvents } from "@tetris/shared";
+import { PacketType } from "@tetris/shared";
 
 const app = express();
 app.use(cors());
 
+const PORT = 9000;
 const httpServer = createServer(app);
-const io = new Server<C2SEvents, S2CEvents>(httpServer, {
-	cors: { origin: "*", methods: ["GET", "POST"], credentials: true }
+
+const io = new Server(httpServer, {
+    cors: { 
+        origin: [
+            "http://localhost:3000", 
+            "http://127.0.0.1:3000"
+        ], 
+        methods: ["GET", "POST"], 
+        credentials: true 
+    }
 });
 
 let queue: Player[] = [];
 let rooms: Room[] = [];
 
 function cleanRooms() {
-	rooms = rooms.filter(r => r.isEmpty());
+	rooms = rooms.filter(r => !r.isEmpty());
 }
 
 function matchmake() {
 	cleanRooms();
 
 	let currentRoom;
-	for (const player of queue.reverse()) {
+	for (const player of queue) {
 		if (!currentRoom) currentRoom = rooms.find(r => r.isOpen());
 		if (!currentRoom) {
 			currentRoom = new Room();
@@ -34,18 +43,38 @@ function matchmake() {
 
 		const success = currentRoom.addPlayer(player);
 		if (!success) break;
-		queue.pop();
+		queue.shift();
 	}
 }
 
 function onConnection(socket: Socket) {
 	const player = new Player(socket);
-	console.log(`${player.name} connected!`);
-	queue.push(player);
-	matchmake();
+	console.log(`${player.name} connected.`);
+
+	player.on(PacketType.JoinQueue, () => {
+		if (queue.includes(player) || rooms.some(r => r.hasPlayer(player.id))) return;
+		console.log(`${player.name} joined queue.`);
+		queue.push(player);
+		matchmake();
+	})
+
+	socket.on("disconnect", () => {
+		console.log(`${player.name} disconnected.`);
+		queue = queue.filter(p => p.id != player.id);
+
+		const room = rooms.find(r => r.hasPlayer(player.id));
+		if (room) {
+			room.removePlayer(player.id);
+			cleanRooms();
+		}
+	})
 }
 
 io.on("connection", onConnection);
+
+httpServer.listen(PORT, () => {
+	console.log(`Server running on http://localhost:${PORT}`);
+});
 
 // Supposed connection flow
 // (C2S) JoinQueue -> Matchmaking -> (S2C) JoinRoom -> Repeat until room is full: [ (S2C) PlayerJoined ] -> (S2C) Seed -> (C2S) Ready ->

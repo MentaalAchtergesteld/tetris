@@ -7,13 +7,15 @@ import { InputManager } from "../../engine/input/input_manager";
 import { DangerLevel } from "../danger";
 import { Widget } from "../../ui/widget";
 import { Recoil, Shaker } from "../../ui/widgets/effects";
-import { Center, HBox, Overlay, SizedBox, VBox } from "../../ui/widgets/layout";
+import { Center, HBox, Overlay } from "../../ui/widgets/layout";
 import { Conditional, Switch } from "../../ui/widgets/logic";
 import { StandardGame } from "../../ui/widgets/standard_game";
 import { Label } from "../../ui/widgets/label";
 import { ColorBlock } from "../../ui/widgets/color_block";
 
 enum GameState {
+	Connecting,
+	Connected,
 	JoiningQueue,
 	InQueue,
 	InRoom,
@@ -30,7 +32,7 @@ export class MultiplayerMode implements GameMode {
 	private socket: Socket<S2CEvents, C2SEvents>;
 	private input: InputManager;
 	private context: GameContext | null = null;
-	private countdownTimer: number = 0;
+	private countdownTimer: number = -1;
 	private hasWonlastMatch: boolean = false;
 
 	private layout: Widget;
@@ -44,8 +46,9 @@ export class MultiplayerMode implements GameMode {
 	private localController: LocalController;
 
 	constructor() {
-		this.state = GameState.JoiningQueue;
+		this.state = GameState.Connecting;
 		this.socket = io(this.URL);
+		this.input = new InputManager();
 
 		this.localGame = new Game();
 		this.remoteGame = new Game();
@@ -56,11 +59,15 @@ export class MultiplayerMode implements GameMode {
 		this.dangerLevel = new DangerLevel(this.localGame, this.shaker);
 
 		this.bindEvents();
-		this.joinQueue();
+		this.connect();
 	}
 
-	private joinQueue() {
+	private connect() {
+		this.socket.once("connect", () => this.joinQueue());
 		this.socket.connect();
+	};
+
+	private joinQueue() {
 		this.socket.emit(PacketType.JoinQueue);
 		this.state = GameState.InQueue;
 	}
@@ -75,6 +82,7 @@ export class MultiplayerMode implements GameMode {
 		});
 
 		this.socket.on(PacketType.Seed, (packet) => {
+			console.log(packet.seed);
 			this.localGame.setSeed(packet.seed);
 			this.remoteGame.setSeed(packet.seed);
 
@@ -83,6 +91,8 @@ export class MultiplayerMode implements GameMode {
 
 		this.socket.on(PacketType.StartMatch, () => {
 			this.state = GameState.InMatch;
+			this.localGame.start();
+			this.remoteGame.start();
 		});
 
 		this.socket.on(PacketType.Action, (packet) => {
@@ -95,11 +105,11 @@ export class MultiplayerMode implements GameMode {
 			}
 		});
 
-		this.socket.on(PacketType.SelfState,    (packet) => {
+		this.socket.on(PacketType.SelfState, (packet) => {
 			
 		});
 
-		this.socket.on(PacketType.OppState,     (packet) => {
+		this.socket.on(PacketType.OppState, (packet) => {
 			this.remoteGame.setGrid(packet.grid);
 
 			const gameCurrentPiece = this.remoteGame.getCurrentPiece();
@@ -113,19 +123,23 @@ export class MultiplayerMode implements GameMode {
 			}
 		});
 
-		this.socket.on(PacketType.GarbageIn,    (packet) => {
+		this.socket.on(PacketType.GarbageIn, (packet) => {
 			this.localGame.addGarbage(packet.amount);
 		});
 
-		this.socket.on(PacketType.GarbageOut,   (packet) => {});
+		this.socket.on(PacketType.GarbageOut, (packet) => {});
 
-		this.socket.on(PacketType.EndMatch,     (packet) => {
+		this.socket.on(PacketType.EndMatch, (packet) => {
 			this.state = GameState.AfterMatch;
 		});
 
-		this.socket.on(PacketType.FinishMatch,  (packet) => {
+		this.socket.on(PacketType.FinishMatch, (packet) => {
 			this.state = GameState.FinishMatch;
 		});
+
+		this.localController.events.on("action", (action) => {
+			this.socket.emit(PacketType.Action, { action, data: this.localController.settings.sdf });
+		})
 	}
 
 	private buildGameLayout(game: Game, isLocal: boolean): Widget {
@@ -137,13 +151,13 @@ export class MultiplayerMode implements GameMode {
 	}
 
 	private buildResultsLayout(): Widget {
-		return new Overlay([
+		return new Conditional(() => this.state == GameState.FinishMatch, new Overlay([
 			new ColorBlock("rgba(0, 0, 0, .75)"),
 			new Switch(() => this.hasWonlastMatch ? 1 : 0, [
 				new Label(() => "match won", "title", "center").setExpand(true),
 				new Label(() => "match lost", "title", "center").setExpand(true),
 			])
-		]);
+		]));
 	}
 
 	private buildLayout(): Widget {
@@ -153,12 +167,16 @@ export class MultiplayerMode implements GameMode {
 
 		const lobbyOrGameLayout = new Switch(() => {
 			switch (this.state) {
-				case GameState.JoiningQueue: return 0;
-				case GameState.InQueue:      return 1;
-				case GameState.InRoom:       return 2;
-				default: return 3;
+				case GameState.Connecting:   return 0;
+				case GameState.Connected:    return 1;
+				case GameState.JoiningQueue: return 2;
+				case GameState.InQueue:      return 3;
+				case GameState.InRoom:       return 4;
+				default: return 5;
 			}
 		},[
+			new Label(() => "connecting", "title", "center"),
+			new Label(() => "connected", "title", "center"),
 			new Label(() => "joining queue", "title", "center"),
 			new Label(() => "in queue", "title", "center"),
 			new Label(() => "in room", "title", "center"),
@@ -167,7 +185,7 @@ export class MultiplayerMode implements GameMode {
 
 		const resultsLayout = this.buildResultsLayout();
 
-		const base = new Overlay([lobbyOrGameLayout, resultsLayout]);
+		const base = new Center(new Overlay([lobbyOrGameLayout, resultsLayout]));
 
 		this.shaker = new Shaker(base);
 		this.recoil = new Recoil(this.shaker,
@@ -180,18 +198,23 @@ export class MultiplayerMode implements GameMode {
 	}
 
 	onEnter(ctx: GameContext): void {
-	    
+		this.context = ctx;	    
 	}
 
 	onExit(): void {
-	    
+		this.socket.disconnect(); 
 	}
 
 	update(dt: number): void {
-	    
+		if (this.state != GameState.InMatch) return; 
+
+		this.input.update();
+		this.localController.update(dt);
+		this.localGame.update(dt);
+		this.remoteGame.update(dt);
 	}
 
 	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {
-	    
+		this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height, theme); 
 	}
 }

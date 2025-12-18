@@ -5,6 +5,7 @@ export enum PacketType {
 	JoinQueue    = "joinQueue",
 	JoinRoom     = "joinRoom",
 	PlayerJoined = "playerJoined",
+	PlayerLeft   = "playerLeft",
 	Seed         = "seed",
 	Ready        = "ready",
 	StartMatch   = "startMatch",
@@ -33,6 +34,10 @@ export interface StatePayload {
 }
 
 export interface PlayerJoinedPayload {
+	playerId: string,
+}
+
+export interface PlayerLeftPayload {
 	playerId: string,
 }
 
@@ -66,6 +71,7 @@ type C2SPayloads = {
 type S2CPayloads = {
 	[PacketType.JoinRoom]: null;
 	[PacketType.PlayerJoined]: PlayerJoinedPayload;
+	[PacketType.PlayerLeft]:   PlayerLeftPayload;
 	[PacketType.Seed]: SeedPayload,
 	[PacketType.StartMatch]: null,
 	[PacketType.Action]: ActionPayload,

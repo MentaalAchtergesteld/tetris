@@ -8,7 +8,6 @@ import { SprintMode } from "./game/modes/sprint";
 import { GameContext, GameMode } from "./game/modes";
 import { BlitzMode } from "./game/modes/blitz";
 import { MultiplayerMode } from "./game/modes/multiplayer";
-import { NetworkClient } from "./engine/network/client";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -63,6 +62,12 @@ new QuickHUD("Settings", HUDPosition.TopRight).setDraggable(true)
 	.addRange("Recoil Damping", 1, 500, gameContext.recoilDamping, 1, (val) => gameContext.recoilDamping = val)
 	.addRange("Recoil Mass", 1, 100, gameContext.recoilMass, 1, (val) => gameContext.recoilMass = val)
 
+function switchGamemode(newMode: GameMode) {
+	if (gamemode) gamemode.onExit();
+	gamemode = newMode;
+	gamemode.onEnter(gameContext);
+}
+
 new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addFolder("Sound")
 	.addButton("1 Line Cleared", () => effectsManager.playLinesCleared(1))
@@ -73,9 +78,9 @@ new QuickHUD("Testing", HUDPosition.BottomRight).setDraggable(true)
 	.addButton("Lock",      () => effectsManager.playLock())
 	.addButton("Game Over",      () => effectsManager.playGameOver())
 	.parent().addFolder("Game Modes")
-	.addButton("40 Lines",    () => { gamemode = new SprintMode();      gamemode.onEnter(gameContext) })
-	.addButton("Blitz",       () => { gamemode = new BlitzMode();       gamemode.onEnter(gameContext) })
-	.addButton("Multiplayer", () => { gamemode = new MultiplayerMode(); gamemode.onEnter(gameContext) })
+	.addButton("40 Lines",    () => switchGamemode(new SprintMode()))
+	.addButton("Blitz",       () => switchGamemode(new BlitzMode()))
+	.addButton("Multiplayer", () => switchGamemode(new MultiplayerMode()))
 
 let lastTime = 0;
 function loop(time: number) {
