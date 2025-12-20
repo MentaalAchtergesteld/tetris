@@ -1,19 +1,3 @@
-import { getPieceBounds } from "@tetris/shared";
-import { Color, GameTheme } from "../theme";
-import { Size } from "./widget";
-
-const offscreenCanvas = document.createElement("canvas");
-const offscreenCtx = offscreenCanvas.getContext("2d")!;
-
-export function measureText(text: string, font: string, fontSize: number): Size {
-	offscreenCtx.font = `${fontSize}px ${font}`;
-	const bounds = offscreenCtx.measureText(text);
-	return {
-		width: bounds.width,
-		height: bounds.actualBoundingBoxAscent + bounds.actualBoundingBoxDescent,
-	}
-}
-
 export function pieceIndexToColor(value: number, theme: GameTheme): Color {
 	switch (value) {
 		case 0: return "transparent";

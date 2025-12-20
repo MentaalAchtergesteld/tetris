@@ -1,7 +1,7 @@
 {
-  "name": "@tetris/shared",
+  "name": "@tetris/ui",
   "version": "1.0.0",
-  "description": "Core game logic shared between client and server",
+  "description": "UI Code, Widget & Layout system",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
@@ -24,3 +24,4 @@
     "typescript": "^5.9.3"
   }
 }
+
