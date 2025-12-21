@@ -2,6 +2,7 @@ export * from "./core/widget"
 export * from "./core/types"
 export * from "./basic/panel";
 export * from "./basic/label";
+export * from "./basic/sized_box";
 export * from "./layout/hbox";
 export * from "./layout/vbox";
 export * from "./layout/center";
