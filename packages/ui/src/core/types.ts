@@ -15,3 +15,11 @@ export interface LayoutData {
 
 export type LayoutOptions = Partial<LayoutData>;
 
+export type Provider<T> = T | (() => T);
+
+export function resolve<T>(val: Provider<T>): T {
+	if (typeof val == "function") {
+		return (val as () => T)();
+	}
+	return val;
+}

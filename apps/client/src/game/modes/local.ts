@@ -58,13 +58,13 @@ export abstract class LocalMode implements GameMode {
 		return new Conditional(
 			() => this.state == GameState.Finished || this.state == GameState.Gameover,
 			new Overlay([
-				new ColorBlock("rgba(0, 0, 0, 0.75)"),
+				new Panel().withStyle({ backgroundColor: "rgba(0, 0, 0, 0.75)" }),
 				new Center(new VBox([
-					new Label(() => this.state == GameState.Finished ? "victory" : "game over", "title", "center"),
+					new Label(() => this.state == GameState.Finished ? "victory" : "game over"),
 					new SizedBox(0, 16),
-					new Label(() => this.getResultLabel(), "data", "center"),
+					new Label(() => this.getResultLabel()),
 					new SizedBox(0, 16),
-					new Label(() => "press R to restart", "data", "center"),
+					new Label("press R to restart"),
 				])),
 			]),
 		);
@@ -72,7 +72,7 @@ export abstract class LocalMode implements GameMode {
 
 	private createLayout(): Widget {
 		const gameLayer = new StandardGame(this.game, [
-				new Label(() => this.getModeName(), "title", "right").setFill(true),
+				new Label(() => this.getModeName()).setFill(true),
 				new SizedBox(0, 16),
 				...this.getSidebarWidgets(),
 			],
@@ -112,7 +112,7 @@ export abstract class LocalMode implements GameMode {
 
 		this.game.events.on("gameOver", () => this.finish(false));
 
-		this.game.events.on("lineClear", (lines) => {
+		this.game.events.on("lineClear", (lines: number) => {
 			this.linesCleared += lines;
 			this.shaker.trigger(this.context ? this.context.shakeIntensityMultiplier * lines : 0);
 
@@ -177,6 +177,6 @@ export abstract class LocalMode implements GameMode {
 	}
 
 	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {
-	    this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height, theme);
+	    this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height);
 	}
 }

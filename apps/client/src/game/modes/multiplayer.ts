@@ -5,13 +5,11 @@ import { C2SEvents, Game, GameAction, PacketType, S2CEvents } from "@tetris/shar
 import { LocalController } from "../../engine/input/controller";
 import { InputManager } from "../../engine/input/input_manager";
 import { DangerLevel } from "../danger";
-import { Widget } from "../../ui/widget";
-import { Recoil, Shaker } from "../../ui/widgets/effects";
-import { Center, HBox, Overlay } from "../../ui/widgets/layout";
-import { Conditional, Switch } from "../../ui/widgets/logic";
-import { StandardGame } from "../../ui/widgets/standard_game";
-import { Label } from "../../ui/widgets/label";
-import { ColorBlock } from "../../ui/widgets/color_block";
+
+// Widgets
+import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel, Switch, HBox } from "@tetris/ui";
+import { Recoil, Shaker } from "../../widgets/effects";
+import { StandardGame } from "../../widgets/standard_game";
 
 enum GameState {
 	Connecting,
@@ -143,19 +141,18 @@ export class MultiplayerMode implements GameMode {
 	}
 
 	private buildGameLayout(game: Game, isLocal: boolean): Widget {
-		const labelText = isLocal ? "you" : "other";
 		const dangerProvider = isLocal ? () => this.dangerLevel.getLevel() : () => 0;
 		return new StandardGame(game, [
-			new Label(() => labelText, "title", "right"),
+			new Label(isLocal ? "you" : "other"),
 		], dangerProvider, () => this.countdownTimer+1);
 	}
 
 	private buildResultsLayout(): Widget {
 		return new Conditional(() => this.state == GameState.FinishMatch, new Overlay([
-			new ColorBlock("rgba(0, 0, 0, .75)"),
+			new Panel().withStyle({ backgroundColor: "rgba(0, 0, 0, 0.75)" }),
 			new Switch(() => this.hasWonlastMatch ? 1 : 0, [
-				new Label(() => "match won", "title", "center").setExpand(true),
-				new Label(() => "match lost", "title", "center").setExpand(true),
+				new Label("match won").setExpand(true),
+				new Label("match lost").setExpand(true),
 			])
 		]));
 	}
@@ -175,11 +172,11 @@ export class MultiplayerMode implements GameMode {
 				default: return 5;
 			}
 		},[
-			new Label(() => "connecting", "title", "center"),
-			new Label(() => "connected", "title", "center"),
-			new Label(() => "joining queue", "title", "center"),
-			new Label(() => "in queue", "title", "center"),
-			new Label(() => "in room", "title", "center"),
+			new Label("connecting"),
+			new Label("connected"),
+			new Label("joining queue"),
+			new Label("in queue"),
+			new Label("in room"),
 			gameLayout
 		]);
 
@@ -215,6 +212,6 @@ export class MultiplayerMode implements GameMode {
 	}
 
 	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {
-		this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height, theme); 
+		this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height); 
 	}
 }

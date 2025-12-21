@@ -1,4 +1,4 @@
-import { Shaker } from "../ui/widgets/effects";
+import { Shaker } from "../widgets/effects";
 import { Game } from "@tetris/shared";
 
 export class DangerLevel {

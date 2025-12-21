@@ -1,4 +1,4 @@
-import { Size } from "../core/types";
+import { Provider, resolve, Size } from "../core/types";
 import { StyledWidget } from "../core/widget";
 import { measureText } from "../util";
 
@@ -26,7 +26,7 @@ const DEFAULT_LABEL_STYLE: LabelStyle = {
 
 export class Label extends StyledWidget<LabelStyle> {
 	constructor(
-		private text: string,
+		private text: Provider<string>,
 	) { super(DEFAULT_LABEL_STYLE); }
 
 	setFontFamily(fontFamily: string): this {
@@ -50,7 +50,12 @@ export class Label extends StyledWidget<LabelStyle> {
 	}
 
 	getMinSize(): Size {
-		const size = measureText(this.text, this.style.fontFamily, this.style.fontSize, this.style.fontWeight);
+		const size = measureText(
+			resolve(this.text),
+			this.style.fontFamily,
+			this.style.fontSize,
+			this.style.fontWeight
+		);
 
 		return {
 			width: size.width,
@@ -83,7 +88,7 @@ export class Label extends StyledWidget<LabelStyle> {
 		}
 
 		ctx.textBaseline = "middle";
-		ctx.fillText(this.text, drawX, y + (h/2));
+		ctx.fillText(resolve(this.text), drawX, y + (h/2));
 		ctx.restore();
 	}
 }
