@@ -1,0 +1,23 @@
+{
+  "name": "@tetris/client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "Mentaal",
+  "license": "ISC",
+  "dependencies": {
+    "@tetris/core": "*",
+    "@tetris/ui": "*",
+    "socket.io-client": "^4.8.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7"
+  }
+}

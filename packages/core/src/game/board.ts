@@ -1,0 +1,116 @@
+import { RNG } from "../engine/rng";
+import { Piece } from "./piece";
+
+export class Board {
+	private readonly rng: RNG;
+
+	width: number;
+	height: number;
+	visibleHeight: number;
+	grid: number[][] = [];
+
+	constructor(rng: RNG, width: number = 10, height: number = 20) {
+		this.rng = rng;
+
+		this.width = width;
+		this.visibleHeight = height;
+
+		this.height = this.visibleHeight * 2;
+		this.initializeGrid();
+	}
+
+	reset() {
+		this.initializeGrid();
+	}
+
+	private initializeGrid() {
+		this.grid = Array.from({ length: this.height }, () => Array(this.width).fill(0));
+	}
+
+	setGrid(grid: number[][]) {
+		this.grid = grid;
+		this.height = grid.length;
+		this.width = grid.reduce((max, r) => Math.max(max, r.length), 0);
+	}
+
+	isEmpty(x: number, y: number): boolean {
+		return (
+			x >= 0 && x < this.width &&
+			y >= 0 && y < this.height &&
+			this.grid[y][x] === 0
+		)
+	}
+
+	isValidPosition(shape: number[][], x: number, y: number): boolean {
+		for (let dy = 0; dy < shape.length; dy++) {
+			for (let dx = 0; dx < shape[dy].length; dx++) {
+				if (shape[dy][dx] == 0) continue;
+				if (!this.isEmpty(x+dx, y+dy)) return false;
+			}
+		}
+		return true;
+	}
+
+	isFullyInBuffer(piece: Piece): boolean {
+		let lowestYInUse = this.height;
+		for (let dy = 0; dy < piece.shape.length; dy++) {
+			for (let dx = 0; dx < piece.shape[dy].length; dx++) {
+				if (piece.shape[dy][dx] == 0) continue;
+				lowestYInUse = Math.min(lowestYInUse, piece.y + dy);
+			}
+		}
+		const bufferHeight = this.height - this.visibleHeight;
+
+		return lowestYInUse <= bufferHeight - 2;
+	}
+
+	getOccupiedHeight(): number {
+		for (let y = 0; y < this.height; y++) {
+			if (this.grid[y].find(v => v > 0)) return this.height-y;
+		}
+		return 0;
+	}
+
+	lockPiece(piece: Piece) {
+		piece.shape.forEach((row, y) => {
+			row.forEach((value, x) => {
+				if (value == 0) return;
+				const boardX = piece.x + x;
+				const boardY = piece.y + y;
+
+				if (boardX < 0 || boardX >= this.width) return;
+				if (boardY < 0 || boardY >= this.height) return;
+				this.grid[boardY][boardX] = value;
+			})
+		})
+	}
+
+	addGarbage(amount: number, holeIndex?: number): void {
+		this.grid = this.grid.slice(amount);
+
+		for (let i = 0; i < amount; i++) {
+			const row = new Array(this.width).fill(1);
+			const hole = holeIndex ?? this.rng.nextIntRange(0, this.width);
+			row[hole] = 0;
+
+			this.grid.push(row);
+		}
+	}
+
+	checkLineClear(): number {
+		let linesCleared = 0;
+		for (let y = this.height-1; y >= 0; y--) {
+			if(this.grid[y].includes(0)) continue;
+			this.grid.splice(y, 1);
+			const emptyRow = Array(this.width).fill(0);
+			this.grid.unshift(emptyRow);
+			y++;
+			linesCleared++;
+		}
+		return linesCleared;
+	}
+
+	print() {
+		console.table(this.grid);
+	}
+}
