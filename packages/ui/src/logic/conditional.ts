@@ -3,8 +3,8 @@ import { Widget } from "../core/widget";
 
 export class Conditional extends Widget {
 	constructor(
-		private child: Widget,
 		private condition: () => boolean,
+		private child: Widget,
 	) { super(); }
 
 	getMinSize(): Size {

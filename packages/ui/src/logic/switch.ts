@@ -3,8 +3,8 @@ import { Widget } from "../core/widget";
 
 export class Switch extends Widget {
 	constructor(
-		private children: Widget[],
 		private condition: () => number,
+		private children: Widget[],
 	) { super(); }
 
 	getActiveChild(): Widget {

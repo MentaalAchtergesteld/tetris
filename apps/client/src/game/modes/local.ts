@@ -7,7 +7,7 @@ import { GameTimer } from "../timer";
 import { GameTheme } from "../../theme";
 
 // Widgets
-import { Widget, Label, Center, Overlay, Spacer, VBox, SizedBox, Conditional, Panel } from "@tetris/ui";
+import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel } from "@tetris/ui";
 import { Recoil, Shaker } from "../../widgets/effects.ts";
 import { StandardGame } from "../../widgets/standard_game";
 
