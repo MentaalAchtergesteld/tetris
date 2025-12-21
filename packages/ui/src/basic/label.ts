@@ -1,51 +1,74 @@
 import { Size } from "../core/types";
-import { Widget } from "../core/widget";
-import { BaseTheme, TextStyle } from "../theme";
+import { StyledWidget } from "../core/widget";
 import { measureText } from "../util";
 
 export enum TextAlign {
 	Left, Center, Right
 };
 
-export class Label<Theme extends BaseTheme = BaseTheme> extends Widget {
-	private overrides: Partial<TextStyle> = {};
+export type FontWeight = "normal" | "bold" | "bolder" | "lighter" | number;
 
+export interface LabelStyle {
+	fontFamily: string;
+	fontSize: number;
+	fontWeight: FontWeight;
+	color: string;
+	textAlign: TextAlign;
+}
+
+const DEFAULT_LABEL_STYLE: LabelStyle = {
+	fontFamily: "Arial",
+	fontSize: 16,
+	fontWeight: "normal",
+	color: "#fff",
+	textAlign: TextAlign.Left,
+}
+
+export class Label extends StyledWidget<LabelStyle> {
 	constructor(
 		private text: string,
-		private variant: string = "default",
-		private textAlign: TextAlign = TextAlign.Left,
-	) { super(); }
+	) { super(DEFAULT_LABEL_STYLE); }
 
-	public setColor(color: string): this { this.overrides.color    = color; return this; };
-	public setSize(size: number): this { this.overrides.fontSize = size; return this; };
-	public setWeight(weight: number): this { this.overrides.fontWeight = weight; return this; };
-	public setText(text: string): this { this.text = text; return this; };
-
-	private getComputedStyle(theme: Theme): TextStyle {
-		const themeStyle = theme.typography[this.variant] || theme.typography.default;
-
-		return { ...themeStyle, ...this.overrides };
+	setFontFamily(fontFamily: string): this {
+		return this.withStyle({ fontFamily })
 	}
 
-	getMinSize(theme: Theme): Size {
-		const style = this.getComputedStyle(theme);
-		const size = measureText(this.text, style.fontFamily, style.fontSize, style.fontWeight);
+	setFontSize(fontSize: number): this {
+		return this.withStyle({ fontSize });
+	}
+
+	setFontWeight(fontWeight: FontWeight): this {
+		return this.withStyle({ fontWeight });
+	}
+
+	setColor(color: string): this {
+		return this.withStyle({ color });
+	}
+
+	setTextAlign(textAlign: TextAlign): this {
+		return this.withStyle({ textAlign });
+	}
+
+	getMinSize(): Size {
+		const size = measureText(this.text, this.style.fontFamily, this.style.fontSize, this.style.fontWeight);
 
 		return {
 			width: size.width,
-			height: style.fontSize,
+			height: this.style.fontSize,
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: Theme): void {
-	  const style = this.getComputedStyle(theme);
+	getComputedStyle() {
+		return `${this.style.fontWeight} ${this.style.fontSize}px ${this.style.fontFamily}`;
+	}
 
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
 		ctx.save();
-		ctx.font = `${style.fontWeight || "normal"} ${style.fontSize}px ${style.fontFamily}`;
-		ctx.fillStyle = style.color || "#fff";
+		ctx.font = this.getComputedStyle();
+		ctx.fillStyle = this.style.color;
 
 		let drawX = x;
-		switch (this.textAlign) {
+		switch (this.style.textAlign) {
 			case TextAlign.Left:
 				ctx.textAlign = "left";
 				break;

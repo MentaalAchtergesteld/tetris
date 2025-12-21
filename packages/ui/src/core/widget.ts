@@ -1,7 +1,6 @@
-import { BaseTheme } from "../theme";
 import { Align, LayoutData, LayoutOptions, Size } from "./types";
 
-export abstract class Widget<Theme extends BaseTheme = BaseTheme> {
+export abstract class Widget {
 	public layout: LayoutData = {
 		expand: false,
 		fill: false,
@@ -28,12 +27,25 @@ export abstract class Widget<Theme extends BaseTheme = BaseTheme> {
 		return this;
 	}
 
-	abstract getMinSize(theme: Theme): Size;
+	abstract getMinSize(): Size;
 
 	abstract draw(
 		ctx: CanvasRenderingContext2D,
 		x: number, y: number,
 		w: number, h: number,
-		theme: Theme
 	): void;
+}
+
+export abstract class StyledWidget<S extends object> extends Widget {
+	protected style: S;
+
+	constructor(defaultStyle: S) {
+		super();
+		this.style = { ...defaultStyle };
+	}
+
+	public withStyle(s: Partial<S>): this {
+		Object.assign(this.style, s);
+		return this;
+	}
 }
