@@ -1,26 +1,56 @@
-import { Game, Piece, TetrominoType } from "@tetris/shared";
-import { GameTheme } from "../../theme";
-import { Size, Widget } from "../widget";
+import { Align, Center, HBox, Label, Overlay, Provider, Size, SizedBox, Spacer, StyledWidget, VBox, Widget } from "@tetris/ui";
 import { BoardWidget } from "./board";
 import { Countdown } from "./countdown";
 import { HoldContainerWidget } from "./hold_container";
-import { Label } from "./label";
-import { Center, HBox, Overlay, SizedBox, Spacer, VBox } from "./layout";
 import { PieceQueueWidget } from "./piece_queue";
+import { Game, Piece, TetrominoType } from "@tetris/core";
 
-export class StandardGame extends Widget {
+export interface GameStyle {
+	blockSize: number;
+	borderWidth: number;
+
+	backgroundColor: string;
+	gridLineColor: string;
+	boardBorderColor: string;
+	dangerColor: string;
+
+	pieceColors: Record<number, string>,
+	ghostColor: string;
+}
+
+export const DEFAULT_GAME_STYLE: GameStyle = {
+	blockSize: 32,
+	borderWidth: 4,
+	backgroundColor: "hsla(0, 0%, 5%, 0.8)",
+	gridLineColor: "hsla(0, 0%, 5%, 0.5)",
+	boardBorderColor: "hsl(0, 0%, 90%)",
+	dangerColor: "hsl(0, 80%, 50%)",
+	ghostColor: "hsla(0, 0%, 25%, 0.5)",
+	pieceColors: {
+			1: "hsl(190, 90%, 60%)", // I
+			2: "hsl(240, 90%, 60%)", // J
+			3: "hsl(35, 90%, 60%)",  // L
+			4: "hsl(60, 90%, 60%)",  // O
+			5: "hsl(110, 90%, 60%)", // S
+			6: "hsl(290, 90%, 60%)", // T
+			7: "hsl(0, 90%, 60%)",   // Z
+			8: "hsl(0, 0%, 40%)"     // Garbage
+	}
+};
+
+export class StandardGame extends StyledWidget<GameStyle> {
 	private root: Widget;
 	private infoWidgets: Widget[];
 
-	private gridProvider: () => number[][];
-	private sizeProvider: () => { width: number, height: number };
-	private visibleHeightProvider: () => number;
-	private activePieceProvider: () => Piece | null;
-	private previewYProvider: () => number;
-	private holdPieceProvider: () => TetrominoType | null;
-	private queueProvider: () => TetrominoType[];
-	private dangerProvider: () => number;
-	private timerProvider: () => number;
+	private grid: Provider<number[][]>;
+	private size: Provider<Size>;
+	private visibleH: Provider<number>;
+	private activePiece: Provider<Piece | null>;
+	private ghostY: Provider<number>;
+	private holdPiece: Provider<TetrominoType>;
+	private queue: Provider<TetrominoType[]>;
+	private danger: Provider<number>;
+	private time: Provider<number>;
 	private timerLabels: string[];
 
 	constructor(
@@ -30,17 +60,17 @@ export class StandardGame extends Widget {
 		timerProvider: () => number,
 		timerLabels: string[] = ["ready", "set", "go"],
 	) {
-		super();
+		super(DEFAULT_GAME_STYLE);
 
-		this.gridProvider = () => game.getGrid();
-		this.sizeProvider = () => game.getDimensions();
-		this.visibleHeightProvider = () => game.getVisibleHeight();
-		this.activePieceProvider = () => game.getCurrentPiece();
-		this.previewYProvider = () => game.getCurrentPieceLowestY();
-		this.holdPieceProvider = () => game.getHoldType();
-		this.queueProvider = () => game.getQueue(5);
-		this.dangerProvider = dangerProvider;
-		this.timerProvider = timerProvider;
+		this.grid = () => game.getGrid();
+		this.size = () => game.getDimensions();
+		this.visibleH = () => game.getVisibleHeight();
+		this.activePiece = () => game.getCurrentPiece();
+		this.ghostY = () => game.getCurrentPieceLowestY();
+		this.holdPiece = () => game.getHoldType();
+		this.queue = () => game.getQueue(5);
+		this.danger = dangerProvider;
+		this.time = timerProvider;
 		this.timerLabels = timerLabels;
 
 		this.infoWidgets = infoWidgets;
@@ -49,41 +79,41 @@ export class StandardGame extends Widget {
 
 	build(): Widget {
 		const LEFT_COLUMN = new VBox([
-			new Label(() => "hold", "title", "left").setFill(true),
+			new Label(() => "hold").setFill(true),
 			new SizedBox(0, 8),
-			new HoldContainerWidget(this.holdPieceProvider, this.dangerProvider),
+			new HoldContainerWidget(this.holdPiece, this.danger),
 			new Spacer(),
 			...this.infoWidgets,
-		], 8).setAlign("start").setFill(true);
+		], 8).setAlign(Align.Start).setFill(true);
 
 		const CENTER_COLUMN = new VBox([
 			new BoardWidget(
-				this.gridProvider,
-				this.sizeProvider,
-				this.visibleHeightProvider,
-				this.activePieceProvider,
-				this.previewYProvider,
-				this.dangerProvider,
+				this.grid,
+				this.size,
+				this.visibleH,
+				this.activePiece,
+				this.ghostY,
+				this.danger,
 			),
-		], 8).setAlign("start").setFill(true);
+		], 8).setAlign(Align.Start).setFill(true);
 
 		const RIGHT_COLUMN = new VBox([
-			new Label(() => "queue", "title", "right").setFill(true),
+			new Label(() => "queue").setFill(true),
 			new SizedBox(0, 8),
-			new PieceQueueWidget(this.queueProvider, this.dangerProvider),
-		], 8).setAlign("start").setFill(true);
+			new PieceQueueWidget(this.queue, this.danger),
+		], 8).setAlign(Align.Start).setFill(true);
 
 		const gameLayer = new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16);
-		const timer = new Center(new Countdown(this.timerProvider, this.timerLabels));
+		const timer = new Center(new Countdown(this.time, this.timerLabels));
 
 		return new Center(new Overlay([gameLayer, timer]));
 	}
 
-	getMinSize(theme: GameTheme): Size {
-		return this.root.getMinSize(theme);    
+	getMinSize(): Size {
+		return this.root.getMinSize();    
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		this.root.draw(ctx, x, y, w, h, theme);
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+		this.root.draw(ctx, x, y, w, h);
 	}
 }

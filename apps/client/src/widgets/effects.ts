@@ -1,5 +1,4 @@
-import { GameTheme } from "../../theme";
-import { Size, Widget } from "../widget";
+import { Size, Widget } from "@tetris/ui";
 
 export const Easing = {
 	easeOutCubic: (t: number): number => {
@@ -19,16 +18,16 @@ export class Opacity extends Widget {
 		private child: Widget,
 	) { super(); }
 
-	getMinSize(theme: GameTheme): Size {
-		return this.child.getMinSize(theme); 
+	getMinSize(): Size {
+		return this.child.getMinSize(); 
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
 		const opacity = Math.max(0, Math.min(1, this.opacityProvider())); 
 
 		ctx.save();
 		ctx.globalAlpha = opacity;
-		this.child.draw(ctx, x, y, w, h, theme);
+		this.child.draw(ctx, x, y, w, h);
 		ctx.restore();
 	}
 }
@@ -39,11 +38,11 @@ export class Scale extends Widget {
 		private child: Widget,
 	) { super(); }
 
-	getMinSize(theme: GameTheme): Size {
-		return this.child.getMinSize(theme); 
+	getMinSize(): Size {
+		return this.child.getMinSize(); 
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
 		const scale = this.scaleProvider();
         
 		const cx = x + w / 2;
@@ -54,7 +53,7 @@ export class Scale extends Widget {
 		ctx.scale(scale, scale);
 		ctx.translate(-cx, -cy);
 		
-		this.child.draw(ctx, x, y, w, h, theme);
+		this.child.draw(ctx, x, y, w, h);
 		ctx.restore();
 	}
 }
@@ -71,8 +70,8 @@ export class Shaker extends Widget {
 	trigger(intensity: number) { this.trauma += intensity; }
 	setRumble(intensity: number) { this.rumble = intensity; }
 
-	getMinSize(theme: GameTheme): Size {
-		return this.child.getMinSize(theme);
+	getMinSize(): Size {
+		return this.child.getMinSize();
 	}
 
 	update(dt: number): void {
@@ -80,16 +79,16 @@ export class Shaker extends Widget {
 		else this.trauma = 0;
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
 		const current = Math.max(this.rumble, this.trauma);
-		if (current <= 0) { this.child.draw(ctx, x, y, w, h, theme); return; } 
+		if (current <= 0) { this.child.draw(ctx, x, y, w, h); return; } 
 
 		const shakeX = (Math.random() - 0.5) * current;
 		const shakeY = (Math.random() - 0.5) * current;
 
 		ctx.save();
 		ctx.translate(shakeX, shakeY);
-		this.child.draw(ctx, x, y, w, h, theme);
+		this.child.draw(ctx, x, y, w, h);
 		ctx.restore();
 	}
 }
@@ -107,8 +106,8 @@ export class Recoil extends Widget {
 
 	trigger(amount: number) { this.yVelocity += amount; }
 
-	getMinSize(theme: GameTheme): Size {
-	    return this.child.getMinSize(theme);
+	getMinSize(): Size {
+	    return this.child.getMinSize();
 	}
 
 	update(dt: number): void {
@@ -127,12 +126,12 @@ export class Recoil extends Widget {
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		if (this.yPosition == 0) { this.child.draw(ctx, x, y, w, h, theme); return; }
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+		if (this.yPosition == 0) { this.child.draw(ctx, x, y, w, h); return; }
 			
 		ctx.save();
 		ctx.translate(0, this.yPosition);
-		this.child.draw(ctx, x, y, w, h, theme);
+		this.child.draw(ctx, x, y, w, h);
 		ctx.restore();
 	}
 }

@@ -1,14 +1,11 @@
-import { GameTheme } from "../../theme";
-import { Size, Widget } from "../widget";
+import { Conditional, Label, Provider, resolve, Size, Widget } from "@tetris/ui";
 import { Easing, Opacity, Scale } from "./effects";
-import { Label } from "./label";
-import { Conditional } from "./logic";
 
 export class Countdown extends Widget {
 	private root: Widget;
 
 	constructor(
-		private timerProvider: () => number,
+		private time: Provider<number>,
 		private labels: string[] = ["ready", "set", "go"],
 	) {
 		super();
@@ -17,7 +14,7 @@ export class Countdown extends Widget {
 	}
 
 	private getScale(): number {
-		const t = this.timerProvider();
+		const t = resolve(this.time);
 		let progress = 1 - (t % 1);
 		progress = Math.min(1, progress * 2);
 
@@ -25,14 +22,14 @@ export class Countdown extends Widget {
 	}
 
 	private getOpacity(): number {
-		const t = this.timerProvider();
+		const t = resolve(this.time);
 
 		if (t > .5) return 1;
 		else return Math.max(0,  t*2);
 	}
 
 	private getText(): string {
-		const t = this.timerProvider();
+		const t = resolve(this.time);
 		const seconds = Math.floor(t);
 
 		if (seconds > this.labels.length) return seconds.toString();
@@ -42,22 +39,20 @@ export class Countdown extends Widget {
 
 	private build(): Widget {
 		return new Conditional(
-			() => this.timerProvider() >= 0,
+			() => resolve(this.time) >= 0,
 			new Opacity(() => this.getOpacity(), new Scale(() => this.getScale(),
 				new Label(
 					() => this.getText(),
-					"title",
-					"center"
 				),
 			))
 		);
 	}
 
-	getMinSize(theme: GameTheme): Size {
-		return this.root.getMinSize(theme);
+	getMinSize(): Size {
+		return this.root.getMinSize();
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		this.root.draw(ctx, x, y, w, h, theme);
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+		this.root.draw(ctx, x, y, w, h);
 	}
 }

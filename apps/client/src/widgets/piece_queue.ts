@@ -1,27 +1,27 @@
-import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "@tetris/shared";
-import { GameTheme } from "../../theme";
+import { Provider, resolve, Size, StyledWidget } from "@tetris/ui";
+import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "@tetris/core";
 import { drawPieceCentered } from "../util";
-import { Size, Widget } from "../widget";
+import { DEFAULT_GAME_STYLE, GameStyle } from "./standard_game";
 
-export class PieceQueueWidget extends Widget {
+export class PieceQueueWidget extends StyledWidget<GameStyle> {
 	constructor(
-		private queueProvider: () => TetrominoType[],
-		private dangerProvider: () => number,
-	) {	super(); }
+		private queue: Provider<TetrominoType[]>,
+		private danger: Provider<number>,
+	) {	super(DEFAULT_GAME_STYLE); }
 
-	getMinSize(theme: GameTheme): Size {
-		const queue = this.queueProvider();
-		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*theme.Layout.BlockSize;
+	getMinSize(): Size {
+		const queue = resolve(this.queue);
+		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*this.style.blockSize;
 		return {
-			width: (MAX_PIECE_BOUNDS.width+.5)*theme.Layout.BlockSize,
+			width: (MAX_PIECE_BOUNDS.width+.5)*this.style.blockSize,
 			height: queue.length * entryHeight,
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		const { width, height } = this.getMinSize(theme);
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+		const { width, height } = this.getMinSize();
 
-		ctx.fillStyle = theme.Colors.BoardBackground;
+		ctx.fillStyle = this.style.backgroundColor;
 		ctx.fillRect(x, y, width, height);
 
 		const borderWidth = 4;
@@ -29,23 +29,25 @@ export class PieceQueueWidget extends Widget {
 
 		ctx.save();
 		ctx.lineWidth = borderWidth;
-		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.strokeStyle = this.style.boardBorderColor;
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
-		ctx.strokeStyle = theme.Colors.DangerBorder;
-		ctx.globalAlpha = this.dangerProvider();
+		ctx.strokeStyle = this.style.dangerColor;
+		ctx.globalAlpha = resolve(this.danger);
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
 		ctx.restore();
 
-		const pieces = this.queueProvider();
+		const pieces = resolve(this.queue);
 
-		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*theme.Layout.BlockSize;
+		const entryHeight = (MAX_PIECE_BOUNDS.height+.5)*this.style.blockSize;
 		for (let i = 0; i < pieces.length; i++) {
 			drawPieceCentered(
 				SHAPES[pieces[i]],
 				x, y+entryHeight*i,
 				width, entryHeight,
-				theme.Layout.BlockSize,
-				theme, ctx
+				this.style.blockSize,
+				this.style.pieceColors,
+				this.style.ghostColor,
+				ctx
 			);
 		}
 	}

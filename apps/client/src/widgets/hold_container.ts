@@ -1,26 +1,25 @@
-import {  MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "@tetris/shared";
-import { Color, GameTheme } from "../../theme";
-import { Size, Widget } from "../widget";
+import { MAX_PIECE_BOUNDS, SHAPES, TetrominoType } from "@tetris/core";
+import { Provider, resolve, Size, StyledWidget } from "@tetris/ui";
 import { drawPieceCentered } from "../util";
+import { DEFAULT_GAME_STYLE, GameStyle } from "./standard_game";
 
-export class HoldContainerWidget extends Widget {
-
+export class HoldContainerWidget extends StyledWidget<GameStyle> {
 	constructor(
-		private holdPieceProvider: () => TetrominoType | null,
-		private dangerProvider: () => number,
-	) { super(); }
+		private holdPiece: Provider<TetrominoType | null>,
+		private danger: Provider<number>,
+	) { super(DEFAULT_GAME_STYLE); }
 
-	getMinSize(theme: GameTheme): Size {
+	getMinSize(): Size {
 		return {
-			width: (MAX_PIECE_BOUNDS.width+.5)*theme.Layout.BlockSize,
-		  height: (MAX_PIECE_BOUNDS.height+1)*theme.Layout.BlockSize,
+			width: (MAX_PIECE_BOUNDS.width+.5)*this.style.blockSize,
+		  height: (MAX_PIECE_BOUNDS.height+1)*this.style.blockSize,
 		} 
 	}
 
-	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, theme: GameTheme): void {
-		const { width, height } = this.getMinSize(theme);
+	draw(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number): void {
+		const { width, height } = this.getMinSize();
 
-		ctx.fillStyle = theme.Colors.BoardBackground;
+		ctx.fillStyle = this.style.backgroundColor;
 		ctx.fillRect(x, y, width, height);
 
 		const borderWidth = 4;
@@ -28,22 +27,24 @@ export class HoldContainerWidget extends Widget {
 
 		ctx.save();
 		ctx.lineWidth = borderWidth;
-		ctx.strokeStyle = theme.Colors.BoardBorder;
+		ctx.strokeStyle = this.style.boardBorderColor;
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
-		ctx.strokeStyle = theme.Colors.DangerBorder;
-		ctx.globalAlpha = this.dangerProvider();
+		ctx.strokeStyle = this.style.dangerColor;
+		ctx.globalAlpha = resolve(this.danger);
 		ctx.strokeRect(x-offset,y-offset, width+borderWidth,height+borderWidth);
 		ctx.restore();
 
-		const piece = this.holdPieceProvider();
+		const piece = resolve(this.holdPiece);
 		if (!piece) return;
 
 		drawPieceCentered(
 			SHAPES[piece],
 			x, y,
 			width, height,
-			theme.Layout.BlockSize,
-			theme, ctx
+			this.style.blockSize,
+			this.style.pieceColors,
+			this.style.ghostColor,
+			ctx
 		);
 		}
 }

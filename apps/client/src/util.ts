@@ -1,3 +1,4 @@
+import { getPieceBounds } from "@tetris/core";
 import { Color, GameTheme } from "./theme";
 
 
@@ -22,16 +23,18 @@ export function drawPieceShape(
 	y: number,
 	size: number,
 	isPreview: boolean,
-	theme: GameTheme,
+	colors: Record<number, string>,
+	borderColor: string,
+	ghostColor: string,
 	ctx: CanvasRenderingContext2D
 ) {
 	piece.forEach((row: number[], dy: number) => {
 		row.forEach((value: number, dx: number) => {
 			if (value == 0) return;
-			ctx.fillStyle = isPreview ? theme.Colors.PiecePreview : pieceIndexToColor(value, theme);
+			ctx.fillStyle = isPreview ? ghostColor : colors[value] || "grey";
 			ctx.fillRect(x + dx*size, y + dy*size, size, size);
 
-			ctx.strokeStyle = theme.Colors.PieceBorder;
+			ctx.strokeStyle = borderColor;
 			ctx.lineWidth = 1;
 			ctx.strokeRect(x + dx*size, y + dy*size, size, size);
 		})
@@ -42,7 +45,8 @@ export function drawPieceCentered(
 	shape: number[][],
 	bx: number, by: number, bw: number, bh: number,
 	size: number,
-	theme: GameTheme,
+	colors: Record<number, string>,
+	borderColor: string,
 	ctx: CanvasRenderingContext2D
 ) {
 	const bounds = getPieceBounds(shape);
@@ -59,11 +63,11 @@ export function drawPieceCentered(
 			const px = startX + dx * size;
 			const py = startY + dy * size;
 
-			const color = pieceIndexToColor(val, theme);
+			const color = colors[val] || "grey";
 			ctx.fillStyle = color;
 			ctx.fillRect(px, py, size, size);
 
-			ctx.strokeStyle = theme.Colors.PieceBorder;
+			ctx.strokeStyle = borderColor;
 			ctx.lineWidth = 1;
 			ctx.strokeRect(px, py, size, size);
 		})
