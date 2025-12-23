@@ -1,7 +1,5 @@
-import { Game, GameAction } from "@tetris/shared";
+import { Game, GameAction, EventEmitter } from "@tetris/core";
 import { InputManager } from "./input_manager";
-import { EventEmitter } from "@tetris/shared";
-import { NetworkClient } from "../network/client";
 
 export interface ControllerSettings {
 	das: number;
@@ -96,21 +94,4 @@ export class LocalController extends Controller {
 			this.game.softDropFactor = 1;
 		}
 	}
-}
-
-export class RemoteController extends Controller {
-	constructor(game: Game, client: NetworkClient, settings: ControllerSettings = DEFAULT_CONTROLLER_SETTINGS) {
-		super(game);
-
-		client.events.on("action", (action: GameAction) => {
-			if (action == GameAction.SoftDrop) {
-				this.game.softDropFactor = settings.sdf;
-			} else {
-				this.triggerAction(action)
-				this.game.softDropFactor = 1;
-			};
-		});
-	}
-
-	update(dt: number): void {}
 }

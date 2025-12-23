@@ -1,5 +1,6 @@
-import { Label, SizedBox, Widget } from "@tetris/ui";
+import { Label, SizedBox, TextAlign, Widget } from "@tetris/ui";
 import { LocalMode } from "./local";
+import { activeTheme } from "../../theme";
 
 export class BlitzMode extends LocalMode {
 
@@ -11,11 +12,23 @@ export class BlitzMode extends LocalMode {
 
 	protected getSidebarWidgets(): Widget[] {
 		return [
-			new Label(() => "time").setFill(true),
-			new Label(() => this.timer.format()).setFill(true),
+			new Label(() => "time")
+				.withStyle(activeTheme.typography.title)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
+			new Label(() => this.timer.format())
+				.withStyle(activeTheme.typography.data)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
 			new SizedBox(0, 16),
-			new Label(() => "score").setFill(true),
-			new Label(() => this.linesCleared.toString()).setFill(true),
+			new Label(() => "score")
+				.withStyle(activeTheme.typography.title)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
+			new Label(() => this.linesCleared.toString())
+				.withStyle(activeTheme.typography.data)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
 		];
 	}
 
@@ -23,7 +36,7 @@ export class BlitzMode extends LocalMode {
 
 	protected onReset(): void {}
 
-	protected onLineClear(lines: number): void {
+	protected onLineClear(_: number): void {
 		const currentLevel = Math.floor(this.linesCleared/10)+1;
 		this.game.gravityMultiplier = Math.max(1, currentLevel*0.8);
 	}

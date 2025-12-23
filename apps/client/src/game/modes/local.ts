@@ -80,8 +80,7 @@ export abstract class LocalMode implements GameMode {
 		const gameLayer = new StandardGame(this.game, [
 				new Label(() => this.getModeName())
 					.withStyle(activeTheme.typography.title)
-					.setTextAlign(TextAlign.Right)
-					.setFill(true),
+					.setTextAlign(TextAlign.Right),
 				new SizedBox(0, 16),
 				...this.getSidebarWidgets(),
 			],
@@ -185,7 +184,7 @@ export abstract class LocalMode implements GameMode {
 		}
 	}
 
-	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void {
+	draw(ctx: CanvasRenderingContext2D): void {
 	    this.layout.draw(ctx, 0, 0, ctx.canvas.width, ctx.canvas.height);
 	}
 }

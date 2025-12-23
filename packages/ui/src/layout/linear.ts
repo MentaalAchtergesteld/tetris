@@ -81,8 +81,8 @@ export abstract class LinearLayout extends Widget {
 			let offsetCross = 0;
 
 			if (!child.layout.fill) {
-				if      (child.layout.align == Align.Center) offsetCross = (availableMainSpace-childCross)/2;
-				else if (child.layout.align == Align.End)    offsetCross = (availableMainSpace-childCross);
+				if      (child.layout.align == Align.Center) offsetCross = (availableCrossSpace-childCross)/2;
+				else if (child.layout.align == Align.End)    offsetCross = (availableCrossSpace-childCross);
 			} else {
 				childCross = availableCrossSpace;
 			}

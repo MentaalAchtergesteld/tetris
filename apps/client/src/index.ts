@@ -3,11 +3,11 @@ import { AudioManager, EffectsManager } from "./engine/audio";
 import { DEFAULT_GAME_SETTINGS } from "@tetris/core";
 import { DEFAULT_CONTROLLER_SETTINGS } from "./engine/input/controller";
 import { QuickHUD, HUDPosition } from "./engine/quickhud";
-import { DEFAULT_THEME } from "./theme";
 import { SprintMode } from "./game/modes/sprint";
 import { GameContext, GameMode } from "./game/modes";
 import { BlitzMode } from "./game/modes/blitz";
 import { MultiplayerMode } from "./game/modes/multiplayer";
+import { activeTheme } from "./theme";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -87,13 +87,13 @@ function loop(time: number) {
 	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
-	ctx.fillStyle = DEFAULT_THEME.Colors.Background;
+	ctx.fillStyle = activeTheme.backgroundColor;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	ctx.save();
 
 	gamemode.update(dt);
-	gamemode.draw(ctx, DEFAULT_THEME);
+	gamemode.draw(ctx);
 
 	ctx.restore();
 

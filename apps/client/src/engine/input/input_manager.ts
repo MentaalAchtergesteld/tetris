@@ -1,4 +1,4 @@
-import { GameAction } from "@tetris/shared";
+import { GameAction } from "@tetris/core";
 
 export const DEFAULT_KEYBINDS: Record<GameAction, string[]> = {
 	[GameAction.MoveLeft]:  ["ArrowLeft"],

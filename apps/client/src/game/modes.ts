@@ -16,5 +16,5 @@ export interface GameMode {
 	onExit(): void;
 
 	update(dt: number): void;
-	draw(ctx: CanvasRenderingContext2D, theme: GameTheme): void;
+	draw(ctx: CanvasRenderingContext2D): void;
 }

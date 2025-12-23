@@ -1,4 +1,4 @@
-import "../../extensions/canvas";
+import "../extensions/canvas"
 import { Size, StyledWidget, Provider, resolve } from "@tetris/ui";
 import { Piece } from "@tetris/core";
 import { DEFAULT_GAME_STYLE, GameStyle } from "./standard_game";
@@ -79,7 +79,7 @@ export class BoardWidget extends StyledWidget<GameStyle> {
 		const pixelHeight = visibleH * bs;
 
 		ctx.save();
-		ctx.translate(x, y);
+		// ctx.translate(x, y);
 
 		ctx.fillStyle = s.backgroundColor;
 		ctx.fillRect(x, y, pixelWidth, pixelHeight);

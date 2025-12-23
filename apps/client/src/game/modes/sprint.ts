@@ -1,7 +1,6 @@
-import { Widget } from "../../ui/widget";
-import { Label } from "../../ui/widgets/label";
-import { SizedBox } from "../../ui/widgets/layout";
+import { Label, SizedBox, TextAlign, Widget } from "@tetris/ui";
 import { LocalMode } from "./local";
+import { activeTheme } from "../../theme";
 
 export class SprintMode extends LocalMode {
 	private readonly GOAL_LINES = 40;
@@ -14,11 +13,23 @@ export class SprintMode extends LocalMode {
 
 	protected getSidebarWidgets(): Widget[] {
 		return [
-			new Label(() => "time", "title", "right").setFill(true),
-			new Label(() => this.timer.format(), "data", "right").setFill(true),
+			new Label(() => "time")
+				.withStyle(activeTheme.typography.title)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
+			new Label(() => this.timer.format())
+				.withStyle(activeTheme.typography.data)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
 			new SizedBox(0, 16),
-			new Label(() => "lines", "title", "right").setFill(true),
-			new Label(() => `${this.linesCleared} / ${this.GOAL_LINES}`, "data", "right").setFill(true),
+			new Label(() => "lines")
+				.withStyle(activeTheme.typography.title)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
+			new Label(() => `${this.linesCleared} / ${this.GOAL_LINES}`)
+				.withStyle(activeTheme.typography.title)
+				.setTextAlign(TextAlign.Right)
+				.setFill(true),
 		];
 	}
 
@@ -26,7 +37,7 @@ export class SprintMode extends LocalMode {
 
 	protected onReset(): void {}
 
-	protected onLineClear(lines: number): void {
+	protected onLineClear(_: number): void {
 		if (this.linesCleared >= this.GOAL_LINES) this.finish(true);
 	}
 }
