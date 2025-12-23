@@ -1,13 +1,13 @@
 import { DEFAULT_CONTROLLER_SETTINGS, LocalController } from "../../engine/input/controller";
 import { GameContext, GameMode } from "../modes";
 import { DangerLevel } from "../danger";
-import { GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/shared";
+import { GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/core";
 import { InputManager } from "../../engine/input/input_manager";
 import { GameTimer } from "../timer";
-import { GameTheme } from "../../theme";
+import { activeTheme, GameTheme } from "../../theme";
 
 // Widgets
-import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel } from "@tetris/ui";
+import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel, TextAlign } from "@tetris/ui";
 import { Recoil, Shaker } from "../../widgets/effects.ts";
 import { StandardGame } from "../../widgets/standard_game";
 
@@ -60,11 +60,17 @@ export abstract class LocalMode implements GameMode {
 			new Overlay([
 				new Panel().withStyle({ backgroundColor: "rgba(0, 0, 0, 0.75)" }),
 				new Center(new VBox([
-					new Label(() => this.state == GameState.Finished ? "victory" : "game over"),
-					new SizedBox(0, 16),
-					new Label(() => this.getResultLabel()),
-					new SizedBox(0, 16),
-					new Label("press R to restart"),
+					new Label(() => this.state == GameState.Finished ? "victory" : "game over")
+						.withStyle(activeTheme.typography.title)
+						.setTextAlign(TextAlign.Center),
+					new SizedBox(0, activeTheme.layout.gap),
+					new Label(() => this.getResultLabel())
+						.withStyle(activeTheme.typography.data)
+						.setTextAlign(TextAlign.Center),
+					new SizedBox(0, activeTheme.layout.gap),
+					new Label("press R to restart")
+						.withStyle(activeTheme.typography.data)
+						.setTextAlign(TextAlign.Center),
 				])),
 			]),
 		);
@@ -72,13 +78,16 @@ export abstract class LocalMode implements GameMode {
 
 	private createLayout(): Widget {
 		const gameLayer = new StandardGame(this.game, [
-				new Label(() => this.getModeName()).setFill(true),
+				new Label(() => this.getModeName())
+					.withStyle(activeTheme.typography.title)
+					.setTextAlign(TextAlign.Right)
+					.setFill(true),
 				new SizedBox(0, 16),
 				...this.getSidebarWidgets(),
 			],
 			() => this.dangerLevel.getLevel(),
 			() => this.countdownTimer + 1,
-		);
+		).withStyle(activeTheme.game);
 
 		const uiLayer = this.createResultsScreen();
 

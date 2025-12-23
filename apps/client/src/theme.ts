@@ -1,76 +1,71 @@
-export type Color = string | CanvasGradient | CanvasPattern;
+import { LabelStyle } from "@tetris/ui";
+import { GameStyle } from "./widgets/standard_game";
 
 export interface GameTheme {
-	Name: string,
-	Colors: {
-		Background: Color,
-		BoardBackground: Color,
-		BoardBorder: Color,
-		DangerBorder: Color,
-		Garbage: Color;
-		PieceI: Color;
-		PieceJ: Color;
-		PieceL: Color;
-		PieceO: Color;
-		PieceS: Color;
-		PieceT: Color;
-		PieceZ: Color;
-		PiecePreview: Color;
-		PieceBorder: Color;
-		TextPrimary: Color;
-		TextSecondary: Color;
-		Accent: Color;
-	};
+	name: string;
 
-	Layout: {
-		BlockSize: number;
-		PanelGap: number;
-		BorderWidth: number;
-		CornerRadius: number;
-	};
+	backgroundColor: string;
 
-	Typography: {
-		TitleFontFamily: string;
-		TitleFontSize: number;
-		DataFontFamily: string;
-		DataFontSize: number;
+	layout: {
+		gap: number;
+	},
+
+	game: GameStyle,
+
+	typography: {
+		title: Partial<LabelStyle>,
+		data: Partial<LabelStyle>,
+		body: Partial<LabelStyle>,
+	},
+}
+
+const DEFAULT_THEME: GameTheme = {
+	name: "Default",
+
+	backgroundColor: "hsl(0, 0%, 15%)",
+
+	layout: { gap: 16, },
+
+	game: {
+		blockSize: 32,
+		borderWidth: 4,
+		backgroundColor: "hsla(0, 0%, 5%, 0.8)",
+		gridLineColor: "hsla(0, 0%, 5%, 0.5)",
+		boardBorderColor: "hsl(0, 0%, 90%)",
+		dangerColor: "hsl(0, 80%, 50%)",
+		ghostColor: "hsla(0, 0%, 25%, 0.5)",
+		pieceColors: {
+				1: "hsl(190, 90%, 60%)", // I
+				2: "hsl(240, 90%, 60%)", // J
+				3: "hsl(35, 90%, 60%)",  // L
+				4: "hsl(60, 90%, 60%)",  // O
+				5: "hsl(110, 90%, 60%)", // S
+				6: "hsl(290, 90%, 60%)", // T
+				7: "hsl(0, 90%, 60%)",   // Z
+				8: "hsl(0, 0%, 40%)"     // Garbage
+		}
+	},
+
+	typography: {
+		title: {
+			fontFamily: "Audiowide",
+			fontSize: 32,
+			fontWeight: "bold",
+			color: "hsl(0, 0%, 90%)",
+		},
+		data: {
+			fontFamily: "Share Tech Mono",
+			fontSize: 24,
+			fontWeight: "normal",
+			color: "hsl(0, 0%, 90%)",
+		},
+		body: {
+			fontFamily: "Arial",
+			fontSize: 14,
+			fontWeight: "normal",
+			color: "hsl(0, 0%, 85%)"
+		}
 	}
 }
 
-export const DEFAULT_THEME: GameTheme = {
-	Name: "Default",
-	Colors: {
-		Background: "hsl(0, 0%, 15%)",
-		BoardBackground: "hsla(0, 0%, 5%, 0.8)",
-		BoardBorder: "hsl(0, 0%, 90%)",
-		DangerBorder: "hsl(0, 80%, 50%)",
-		Garbage: "hsl(0, 0%, 40%)",
-		PieceI: "hsl(190, 90%, 60%)",
-		PieceJ: "hsl(240, 90%, 60%)",
-		PieceL: "hsl(35, 90%, 60%)",
-		PieceO: "hsl(60, 90%, 60%)",
-		PieceS: "hsl(110, 90%, 60%)",
-		PieceT: "hsl(290, 90%, 60%)",
-		PieceZ: "hsl(0, 90%, 60%)",
-		PiecePreview: "hsla(0, 0%, 25%, 0.5)",
-		PieceBorder: "hsla(0, 0%, 5%, 0.5)",
-		TextPrimary: "hsl(0, 0%, 90%)",
-		TextSecondary: "hsl(0, 0%, 90%)",
-		Accent: "hsl(100, 85%, 55%)",
-	},
-
-	Layout: {
-		BlockSize: 32,
-		PanelGap: 16,
-		BorderWidth: 4,
-		CornerRadius: 0,
-	},
-
-	Typography: {
-		TitleFontFamily: "Audiowide",
-		TitleFontSize: 28,
-		DataFontFamily: "Share Tech Mono",
-		DataFontSize: 25,
-	}
-
-}
+export let activeTheme: GameTheme = DEFAULT_THEME;

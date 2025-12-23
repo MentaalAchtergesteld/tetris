@@ -1,13 +1,13 @@
 import { io, Socket } from "socket.io-client";
 import { GameTheme } from "../../theme";
 import { GameContext, GameMode } from "../modes";
-import { C2SEvents, Game, GameAction, PacketType, S2CEvents } from "@tetris/shared";
+import { Game, GameAction } from "@tetris/core";
 import { LocalController } from "../../engine/input/controller";
 import { InputManager } from "../../engine/input/input_manager";
 import { DangerLevel } from "../danger";
 
 // Widgets
-import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel, Switch, HBox } from "@tetris/ui";
+import { Widget, Label, Center, Overlay, Conditional, Panel, Switch, HBox } from "@tetris/ui";
 import { Recoil, Shaker } from "../../widgets/effects";
 import { StandardGame } from "../../widgets/standard_game";
 

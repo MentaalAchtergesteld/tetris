@@ -1,6 +1,4 @@
-import { Widget } from "../../ui/widget";
-import { Label } from "../../ui/widgets/label";
-import { SizedBox } from "../../ui/widgets/layout";
+import { Label, SizedBox, Widget } from "@tetris/ui";
 import { LocalMode } from "./local";
 
 export class BlitzMode extends LocalMode {
@@ -13,11 +11,11 @@ export class BlitzMode extends LocalMode {
 
 	protected getSidebarWidgets(): Widget[] {
 		return [
-			new Label(() => "time", "title", "right").setFill(true),
-			new Label(() => this.timer.format(), "data", "right").setFill(true),
+			new Label(() => "time").setFill(true),
+			new Label(() => this.timer.format()).setFill(true),
 			new SizedBox(0, 16),
-			new Label(() => "score", "title", "right").setFill(true),
-			new Label(() => this.linesCleared.toString(), "data", "right").setFill(true),
+			new Label(() => "score").setFill(true),
+			new Label(() => this.linesCleared.toString()).setFill(true),
 		];
 	}
 
