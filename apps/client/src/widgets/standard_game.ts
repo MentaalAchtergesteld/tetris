@@ -4,6 +4,7 @@ import { Countdown } from "./countdown";
 import { HoldContainerWidget } from "./hold_container";
 import { PieceQueueWidget } from "./piece_queue";
 import { Game, Piece, TetrominoType } from "@tetris/core";
+import { activeTheme } from "../theme";
 
 export interface GameStyle {
 	blockSize: number;
@@ -27,14 +28,14 @@ export const DEFAULT_GAME_STYLE: GameStyle = {
 	dangerColor: "hsl(0, 80%, 50%)",
 	ghostColor: "hsla(0, 0%, 25%, 0.5)",
 	pieceColors: {
-			1: "hsl(190, 90%, 60%)", // I
-			2: "hsl(240, 90%, 60%)", // J
-			3: "hsl(35, 90%, 60%)",  // L
-			4: "hsl(60, 90%, 60%)",  // O
-			5: "hsl(110, 90%, 60%)", // S
-			6: "hsl(290, 90%, 60%)", // T
-			7: "hsl(0, 90%, 60%)",   // Z
-			8: "hsl(0, 0%, 40%)"     // Garbage
+			1: "hsl(0, 0%, 40%)",    // Garbage
+			2: "hsl(190, 90%, 60%)", // I
+			3: "hsl(240, 90%, 60%)", // J
+			4: "hsl(35, 90%, 60%)",  // L
+			5: "hsl(60, 90%, 60%)",  // O
+			6: "hsl(110, 90%, 60%)", // S
+			7: "hsl(290, 90%, 60%)", // T
+			8: "hsl(0, 90%, 60%)",   // Z
 	}
 };
 
@@ -79,9 +80,12 @@ export class StandardGame extends StyledWidget<GameStyle> {
 
 	build(): Widget {
 		const LEFT_COLUMN = new VBox([
-			new Label(() => "hold").setFill(true),
-			new SizedBox(0, 8),
-			new HoldContainerWidget(this.holdPiece, this.danger),
+			new Label(() => "hold")
+				.withStyle(activeTheme.typography.title)
+				.setFill(true),
+			new SizedBox(0, 4),
+			new HoldContainerWidget(this.holdPiece, this.danger)
+				.withStyle(this.style),
 			new Spacer(),
 			...this.infoWidgets,
 		], 8).setAlign(Align.Start).setFill(true);
@@ -94,16 +98,19 @@ export class StandardGame extends StyledWidget<GameStyle> {
 				this.activePiece,
 				this.ghostY,
 				this.danger,
-			),
-		], 8).setAlign(Align.Start).setFill(true);
+			).withStyle(this.style),
+		], 8).setAlign(Align.Start);
 
 		const RIGHT_COLUMN = new VBox([
-			new Label(() => "queue").setFill(true),
-			new SizedBox(0, 8),
-			new PieceQueueWidget(this.queue, this.danger),
-		], 8).setAlign(Align.Start).setFill(true);
+			new Label(() => "queue")
+				.withStyle(activeTheme.typography.title)
+				.setFill(true),
+			new SizedBox(0, 4),
+			new PieceQueueWidget(this.queue, this.danger)
+				.withStyle(this.style),
+		], 8).setAlign(Align.Start);
 
-		const gameLayer = new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 16);
+		const gameLayer = new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 24);
 		const timer = new Center(new Countdown(this.time, this.timerLabels));
 
 		return new Center(new Overlay([gameLayer, timer]));

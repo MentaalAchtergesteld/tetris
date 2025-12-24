@@ -103,6 +103,8 @@ function loop(time: number) {
 async function init() {
 	await document.fonts.ready;
 
+	console.log(activeTheme.game.pieceColors);
+
 	gamemode.onEnter(gameContext);
 
 	requestAnimationFrame(loop);

@@ -35,27 +35,27 @@ const DEFAULT_THEME: GameTheme = {
 		dangerColor: "hsl(0, 80%, 50%)",
 		ghostColor: "hsla(0, 0%, 25%, 0.5)",
 		pieceColors: {
-				1: "hsl(190, 90%, 60%)", // I
-				2: "hsl(240, 90%, 60%)", // J
-				3: "hsl(35, 90%, 60%)",  // L
-				4: "hsl(60, 90%, 60%)",  // O
-				5: "hsl(110, 90%, 60%)", // S
-				6: "hsl(290, 90%, 60%)", // T
-				7: "hsl(0, 90%, 60%)",   // Z
-				8: "hsl(0, 0%, 40%)"     // Garbage
+				1: "hsl(0, 0%, 40%)",    // Garbage
+				2: "hsl(190, 90%, 60%)", // I
+				3: "hsl(240, 90%, 60%)", // J
+				4: "hsl(35, 90%, 60%)",  // L
+				5: "hsl(60, 90%, 60%)",  // O
+				6: "hsl(110, 90%, 60%)", // S
+				7: "hsl(290, 90%, 60%)", // T
+				8: "hsl(0, 90%, 60%)",   // Z
 		}
 	},
 
 	typography: {
 		title: {
 			fontFamily: "Audiowide",
-			fontSize: 32,
+			fontSize: 24,
 			fontWeight: "bold",
 			color: "hsl(0, 0%, 90%)",
 		},
 		data: {
 			fontFamily: "Share Tech Mono",
-			fontSize: 24,
+			fontSize: 22,
 			fontWeight: "normal",
 			color: "hsl(0, 0%, 90%)",
 		},

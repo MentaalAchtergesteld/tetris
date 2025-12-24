@@ -26,8 +26,8 @@ export class SprintMode extends LocalMode {
 				.withStyle(activeTheme.typography.title)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
-			new Label(() => `${this.linesCleared} / ${this.GOAL_LINES}`)
-				.withStyle(activeTheme.typography.title)
+			new Label(() => `${this.linesCleared}/${this.GOAL_LINES}`)
+				.withStyle(activeTheme.typography.data)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 		];

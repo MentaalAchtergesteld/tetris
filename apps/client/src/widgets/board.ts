@@ -79,7 +79,6 @@ export class BoardWidget extends StyledWidget<GameStyle> {
 		const pixelHeight = visibleH * bs;
 
 		ctx.save();
-		// ctx.translate(x, y);
 
 		ctx.fillStyle = s.backgroundColor;
 		ctx.fillRect(x, y, pixelWidth, pixelHeight);
@@ -103,8 +102,8 @@ export class BoardWidget extends StyledWidget<GameStyle> {
 		const piece = resolve(this.activePiece);
 		if (piece) {
 			const ghostY = resolve(this.ghostY);
-			this.drawPiece(ctx, piece, x, y, ghostY+bufferHeight, visibleH, true);
-			this.drawPiece(ctx, piece, x, y, ghostY+bufferHeight, visibleH, false);
+			this.drawPiece(ctx, piece, x, y, ghostY, visibleH, true);
+			this.drawPiece(ctx, piece, x, y, piece.y, visibleH, false);
 		}
 
 		const borderOffset = s.borderWidth/2;

@@ -4,7 +4,7 @@ import { DangerLevel } from "../danger";
 import { GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/core";
 import { InputManager } from "../../engine/input/input_manager";
 import { GameTimer } from "../timer";
-import { activeTheme, GameTheme } from "../../theme";
+import { activeTheme } from "../../theme";
 
 // Widgets
 import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel, TextAlign } from "@tetris/ui";
@@ -80,6 +80,7 @@ export abstract class LocalMode implements GameMode {
 		const gameLayer = new StandardGame(this.game, [
 				new Label(() => this.getModeName())
 					.withStyle(activeTheme.typography.title)
+					.setFill(true)
 					.setTextAlign(TextAlign.Right),
 				new SizedBox(0, 16),
 				...this.getSidebarWidgets(),

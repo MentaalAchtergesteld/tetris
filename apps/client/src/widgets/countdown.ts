@@ -1,5 +1,6 @@
 import { Conditional, Label, Provider, resolve, Size, Widget } from "@tetris/ui";
 import { Easing, Opacity, Scale } from "./effects";
+import { activeTheme } from "../theme";
 
 export class Countdown extends Widget {
 	private root: Widget;
@@ -43,7 +44,7 @@ export class Countdown extends Widget {
 			new Opacity(() => this.getOpacity(), new Scale(() => this.getScale(),
 				new Label(
 					() => this.getText(),
-				),
+				).withStyle(activeTheme.typography.title),
 			))
 		);
 	}
