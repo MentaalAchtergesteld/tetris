@@ -1,8 +1,6 @@
 import { Conditional, Label, LabelStyle, Provider, resolve, Size, StyledWidget, TextAlign, Widget } from "@tetris/ui";
 import { Easing, Opacity, Scale } from "./effects";
 
-
-
 export class Countdown extends StyledWidget<LabelStyle> {
 	private root: Widget;
 
@@ -13,6 +11,10 @@ export class Countdown extends StyledWidget<LabelStyle> {
 		super({fontFamily: "Arial", fontWeight: "normal", fontSize: 24, color: "#fff", textAlign: TextAlign.Center});
 		this.root = this.build();
 		this.labels = this.labels.reverse();
+	}
+
+	protected onStyleChange(): void {
+	  this.root = this.build();
 	}
 
 	private getScale(): number {

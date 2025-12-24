@@ -46,6 +46,9 @@ export abstract class StyledWidget<S extends object> extends Widget {
 
 	public withStyle(s: Partial<S>): this {
 		Object.assign(this.style, s);
+		this.onStyleChange();
 		return this;
 	}
+
+	protected onStyleChange(): void {}
 }

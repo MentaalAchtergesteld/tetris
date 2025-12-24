@@ -112,7 +112,7 @@ export class StandardGame extends StyledWidget<GameTheme> {
 		], 8).setAlign(Align.Start);
 
 		const gameLayer = new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 24);
-		const timer = new Center(new Countdown(this.time, this.timerLabels));
+		const timer = new Center(new Countdown(this.time, this.timerLabels).withStyle(this.style.typography.title));
 
 		return new Center(new Overlay([gameLayer, timer]));
 	}
