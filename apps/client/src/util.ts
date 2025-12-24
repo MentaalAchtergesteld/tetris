@@ -1,21 +1,4 @@
 import { getPieceBounds } from "@tetris/core";
-import { Color, GameTheme } from "./theme";
-
-
-export function pieceIndexToColor(value: number, theme: GameTheme): Color {
-	switch (value) {
-		case 0: return "transparent";
-		case 1: return theme.Colors.Garbage;
-		case 2: return theme.Colors.PieceI;
-		case 3: return theme.Colors.PieceJ;
-		case 4: return theme.Colors.PieceL;
-		case 5: return theme.Colors.PieceO;
-		case 6: return theme.Colors.PieceS;
-		case 7: return theme.Colors.PieceT;
-		case 8: return theme.Colors.PieceZ;
-		default: return "#FFFFFF";
-	}
-}
 
 export function drawPieceShape(
 	piece: number[][],

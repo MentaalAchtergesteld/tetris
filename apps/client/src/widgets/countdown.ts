@@ -1,15 +1,16 @@
-import { Conditional, Label, Provider, resolve, Size, Widget } from "@tetris/ui";
+import { Conditional, Label, LabelStyle, Provider, resolve, Size, StyledWidget, TextAlign, Widget } from "@tetris/ui";
 import { Easing, Opacity, Scale } from "./effects";
-import { activeTheme } from "../theme";
 
-export class Countdown extends Widget {
+
+
+export class Countdown extends StyledWidget<LabelStyle> {
 	private root: Widget;
 
 	constructor(
 		private time: Provider<number>,
 		private labels: string[] = ["ready", "set", "go"],
 	) {
-		super();
+		super({fontFamily: "Arial", fontWeight: "normal", fontSize: 24, color: "#fff", textAlign: TextAlign.Center});
 		this.root = this.build();
 		this.labels = this.labels.reverse();
 	}
@@ -44,7 +45,7 @@ export class Countdown extends Widget {
 			new Opacity(() => this.getOpacity(), new Scale(() => this.getScale(),
 				new Label(
 					() => this.getText(),
-				).withStyle(activeTheme.typography.title),
+				).withStyle(this.style),
 			))
 		);
 	}

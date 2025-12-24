@@ -7,7 +7,7 @@ import { SprintMode } from "./game/modes/sprint";
 import { GameContext, GameMode } from "./game/modes";
 import { BlitzMode } from "./game/modes/blitz";
 import { MultiplayerMode } from "./game/modes/multiplayer";
-import { activeTheme } from "./theme";
+import { DEFAULT_THEME } from "./theme";
 
 function createCanvas(): [ HTMLCanvasElement, CanvasRenderingContext2D ] {
 	const canvas = document.createElement("canvas") as HTMLCanvasElement;
@@ -33,6 +33,7 @@ const audioManager = new AudioManager();
 const effectsManager = new EffectsManager(audioManager);
 
 const gameContext: GameContext = {
+	theme: DEFAULT_THEME,
 	effects: effectsManager,
 	audio: audioManager,
 	shakeDecay: 30,
@@ -87,7 +88,7 @@ function loop(time: number) {
 	const dt = Math.min((time - lastTime) / 1000, 0.1);
 	lastTime = time;
 
-	ctx.fillStyle = activeTheme.backgroundColor;
+	ctx.fillStyle = gameContext.theme.backgroundColor;
 	ctx.fillRect(0, 0, canvas.width, canvas.height);
 
 	ctx.save();
@@ -102,8 +103,6 @@ function loop(time: number) {
 
 async function init() {
 	await document.fonts.ready;
-
-	console.log(activeTheme.game.pieceColors);
 
 	gamemode.onEnter(gameContext);
 

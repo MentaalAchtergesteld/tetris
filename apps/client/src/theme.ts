@@ -19,7 +19,7 @@ export interface GameTheme {
 	},
 }
 
-const DEFAULT_THEME: GameTheme = {
+export const DEFAULT_THEME: GameTheme = {
 	name: "Default",
 
 	backgroundColor: "hsl(0, 0%, 15%)",
@@ -67,5 +67,3 @@ const DEFAULT_THEME: GameTheme = {
 		}
 	}
 }
-
-export let activeTheme: GameTheme = DEFAULT_THEME;

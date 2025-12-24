@@ -4,7 +4,6 @@ import { DangerLevel } from "../danger";
 import { GameAction, DEFAULT_GAME_SETTINGS, Game } from "@tetris/core";
 import { InputManager } from "../../engine/input/input_manager";
 import { GameTimer } from "../timer";
-import { activeTheme } from "../../theme";
 
 // Widgets
 import { Widget, Label, Center, Overlay, VBox, SizedBox, Conditional, Panel, TextAlign } from "@tetris/ui";
@@ -41,9 +40,6 @@ export abstract class LocalMode implements GameMode {
 		this.controller = new LocalController(this.game, this.input, DEFAULT_CONTROLLER_SETTINGS);
 		this.timer = new GameTimer(timerDirection, timeLimit);
 
-		this.layout = this.createLayout();
-		this.dangerLevel = new DangerLevel(this.game, this.shaker);
-
 		this.bindBaseEvents();
 	}
 
@@ -61,15 +57,15 @@ export abstract class LocalMode implements GameMode {
 				new Panel().withStyle({ backgroundColor: "rgba(0, 0, 0, 0.75)" }),
 				new Center(new VBox([
 					new Label(() => this.state == GameState.Finished ? "victory" : "game over")
-						.withStyle(activeTheme.typography.title)
+						.withStyle(this.context.theme.typography.title)
 						.setTextAlign(TextAlign.Center),
-					new SizedBox(0, activeTheme.layout.gap),
+					new SizedBox(0, this.context.theme.layout.gap),
 					new Label(() => this.getResultLabel())
-						.withStyle(activeTheme.typography.data)
+						.withStyle(this.context.theme.typography.data)
 						.setTextAlign(TextAlign.Center),
-					new SizedBox(0, activeTheme.layout.gap),
+					new SizedBox(0, this.context.theme.layout.gap),
 					new Label("press R to restart")
-						.withStyle(activeTheme.typography.data)
+						.withStyle(this.context.theme.typography.data)
 						.setTextAlign(TextAlign.Center),
 				])),
 			]),
@@ -79,7 +75,7 @@ export abstract class LocalMode implements GameMode {
 	private createLayout(): Widget {
 		const gameLayer = new StandardGame(this.game, [
 				new Label(() => this.getModeName())
-					.withStyle(activeTheme.typography.title)
+					.withStyle(this.context.theme.typography.title)
 					.setFill(true)
 					.setTextAlign(TextAlign.Right),
 				new SizedBox(0, 16),
@@ -87,7 +83,7 @@ export abstract class LocalMode implements GameMode {
 			],
 			() => this.dangerLevel.getLevel(),
 			() => this.countdownTimer + 1,
-		).withStyle(activeTheme.game);
+		).withStyle(this.context.theme.game);
 
 		const uiLayer = this.createResultsScreen();
 
@@ -147,11 +143,13 @@ export abstract class LocalMode implements GameMode {
 
 	onEnter(ctx: GameContext): void {
 		this.context = ctx;
+		this.layout = this.createLayout();
+		this.dangerLevel = new DangerLevel(this.game, this.shaker);
 		this.reset();
 	}
 
 	onExit(): void {
-	    this.context = null;
+		this.context = null;
 	}
 
 	update(dt: number): void {

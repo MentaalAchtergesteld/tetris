@@ -1,7 +1,8 @@
-import { GameTheme } from "../theme";
 import { AudioManager, EffectsManager } from "../engine/audio";
+import { GameTheme } from "../theme";
 
 export interface GameContext {
+	theme: GameTheme,
 	effects: EffectsManager,
 	audio: AudioManager;
 	shakeDecay: number;

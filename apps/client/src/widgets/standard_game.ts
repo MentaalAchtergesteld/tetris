@@ -4,7 +4,7 @@ import { Countdown } from "./countdown";
 import { HoldContainerWidget } from "./hold_container";
 import { PieceQueueWidget } from "./piece_queue";
 import { Game, Piece, TetrominoType } from "@tetris/core";
-import { activeTheme } from "../theme";
+import { DEFAULT_THEME, GameTheme } from "../theme";
 
 export interface GameStyle {
 	blockSize: number;
@@ -39,7 +39,7 @@ export const DEFAULT_GAME_STYLE: GameStyle = {
 	}
 };
 
-export class StandardGame extends StyledWidget<GameStyle> {
+export class StandardGame extends StyledWidget<GameTheme> {
 	private root: Widget;
 	private infoWidgets: Widget[];
 
@@ -61,7 +61,7 @@ export class StandardGame extends StyledWidget<GameStyle> {
 		timerProvider: () => number,
 		timerLabels: string[] = ["ready", "set", "go"],
 	) {
-		super(DEFAULT_GAME_STYLE);
+		super(DEFAULT_THEME);
 
 		this.grid = () => game.getGrid();
 		this.size = () => game.getDimensions();
@@ -75,17 +75,18 @@ export class StandardGame extends StyledWidget<GameStyle> {
 		this.timerLabels = timerLabels;
 
 		this.infoWidgets = infoWidgets;
+
 		this.root = this.build();
 	}
 
 	build(): Widget {
 		const LEFT_COLUMN = new VBox([
 			new Label(() => "hold")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.style.typography.title)
 				.setFill(true),
 			new SizedBox(0, 4),
 			new HoldContainerWidget(this.holdPiece, this.danger)
-				.withStyle(this.style),
+				.withStyle(this.style.game),
 			new Spacer(),
 			...this.infoWidgets,
 		], 8).setAlign(Align.Start).setFill(true);
@@ -98,16 +99,16 @@ export class StandardGame extends StyledWidget<GameStyle> {
 				this.activePiece,
 				this.ghostY,
 				this.danger,
-			).withStyle(this.style),
+			).withStyle(this.style.game),
 		], 8).setAlign(Align.Start);
 
 		const RIGHT_COLUMN = new VBox([
 			new Label(() => "queue")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.style.typography.title)
 				.setFill(true),
 			new SizedBox(0, 4),
 			new PieceQueueWidget(this.queue, this.danger)
-				.withStyle(this.style),
+				.withStyle(this.style.game),
 		], 8).setAlign(Align.Start);
 
 		const gameLayer = new HBox([LEFT_COLUMN, CENTER_COLUMN, RIGHT_COLUMN], 24);

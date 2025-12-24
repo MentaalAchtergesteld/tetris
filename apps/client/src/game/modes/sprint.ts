@@ -1,6 +1,5 @@
 import { Label, SizedBox, TextAlign, Widget } from "@tetris/ui";
 import { LocalMode } from "./local";
-import { activeTheme } from "../../theme";
 
 export class SprintMode extends LocalMode {
 	private readonly GOAL_LINES = 40;
@@ -14,20 +13,20 @@ export class SprintMode extends LocalMode {
 	protected getSidebarWidgets(): Widget[] {
 		return [
 			new Label(() => "time")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.context.theme.typography.title)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new Label(() => this.timer.format())
-				.withStyle(activeTheme.typography.data)
+				.withStyle(this.context.theme.typography.data)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new SizedBox(0, 16),
 			new Label(() => "lines")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.context.theme.typography.title)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new Label(() => `${this.linesCleared}/${this.GOAL_LINES}`)
-				.withStyle(activeTheme.typography.data)
+				.withStyle(this.context.theme.typography.data)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 		];

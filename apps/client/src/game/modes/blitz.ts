@@ -1,6 +1,5 @@
 import { Label, SizedBox, TextAlign, Widget } from "@tetris/ui";
 import { LocalMode } from "./local";
-import { activeTheme } from "../../theme";
 
 export class BlitzMode extends LocalMode {
 
@@ -13,20 +12,20 @@ export class BlitzMode extends LocalMode {
 	protected getSidebarWidgets(): Widget[] {
 		return [
 			new Label(() => "time")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.context.theme.typography.title)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new Label(() => this.timer.format())
-				.withStyle(activeTheme.typography.data)
+				.withStyle(this.context.theme.typography.data)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new SizedBox(0, 16),
 			new Label(() => "score")
-				.withStyle(activeTheme.typography.title)
+				.withStyle(this.context.theme.typography.title)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 			new Label(() => this.linesCleared.toString())
-				.withStyle(activeTheme.typography.data)
+				.withStyle(this.context.theme.typography.data)
 				.setTextAlign(TextAlign.Right)
 				.setFill(true),
 		];
