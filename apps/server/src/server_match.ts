@@ -1,5 +1,5 @@
-import { C2SEvents, PacketType, S2CEvents } from "@tetris/shared";
-import { Game, GameAction, EventEmitter } from "@tetris/shared";
+import { C2SEvents, PacketType, S2CEvents } from "@tetris/core";
+import { Game, GameAction, EventEmitter } from "@tetris/core";
 import { Socket } from "socket.io";
 
 export class Player {

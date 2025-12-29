@@ -4,7 +4,7 @@ import { createServer } from "node:http";
 import { Server, Socket } from "socket.io";
 import { Room } from "./room.js";
 import { Player } from "./server_match.js";
-import { PacketType } from "@tetris/shared";
+import { PacketType } from "@tetris/core";
 
 const app = express();
 app.use(cors());

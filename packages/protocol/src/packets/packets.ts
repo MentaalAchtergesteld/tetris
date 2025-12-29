@@ -1,6 +1,3 @@
-import { GameAction } from "../game/actions";
-import { Piece } from "../game/piece";
-
 export enum PacketType {
 	JoinQueue    = "joinQueue",
 	JoinRoom     = "joinRoom",
@@ -23,7 +20,7 @@ export enum PacketType {
 }
 
 export interface ActionPayload {
-	action: GameAction,
+	action: GamepadEventInit,
 	data: number,
 }
 

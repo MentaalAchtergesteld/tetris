@@ -1,4 +1,4 @@
-import { PacketType } from "@tetris/shared";
+import { PacketType } from "@tetris/core";
 import { Player, ServerMatch } from "./server_match.js";
 
 export class Room {
